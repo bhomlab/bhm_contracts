@@ -5,6 +5,12 @@ import './internal_library/common/Blocked.sol';
 
 
 contract BHM is MiniMeToken, Blocked {
+  struct AuctionStruct {
+  	address[] auctionAddr;	
+  }
+  
+  mapping (address => AuctionStruct) AuctionStructs;
+
   mapping (address => bool) public admin;
 
   modifier onlyNotBlocked(address _addr) {
@@ -58,7 +64,7 @@ contract BHM is MiniMeToken, Blocked {
   function generateTokensByList(address[] _owners, uint[] _amounts) public onlyController  returns (bool) {
     require(_owners.length == _amounts.length);
 
-    for(uint i = 0; i < _owners.length; i++) {
+    for(uint i = 0; i < _owners.length; ++i) {
       generateTokens(_owners[i], _amounts[i]);
     }
 
@@ -78,6 +84,11 @@ contract BHM is MiniMeToken, Blocked {
     SetAdmin(_addr);
 
     return true;
+  }
+  
+  function createAuction(uint _biddingTime) public {
+    //TODO add new information
+  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender));
   }
   
   

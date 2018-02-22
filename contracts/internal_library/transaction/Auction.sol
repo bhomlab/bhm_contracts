@@ -29,12 +29,9 @@ contract Auction {
     /// Create a simple auction with `_biddingTime`
     /// seconds bidding time on behalf of the
     /// beneficiary address `_beneficiary`.
-    function Auction(
-        uint _biddingTime,
-        address _beneficiary
-    ) public {
+    function Auction(uint _biddingTime, address _beneficiary ) public {
         beneficiary = _beneficiary;
-        auctionEnd = now + _biddingTime;
+        auctionEnd = _biddingTime;
     }
 
     /// Bid on the auction with the value sent
