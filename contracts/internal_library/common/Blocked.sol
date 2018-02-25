@@ -5,7 +5,7 @@ contract Blocked {
 
   event Blocked(address _addr);
   event Unblocked(address _addr);
-
+  //TODO ONLY CONTROLLER
   function blockAddress(address _addr) public {
     require(!blocked[_addr]);
     blocked[_addr] = true;

@@ -6,7 +6,7 @@ import './internal_library/common/Blocked.sol';
 
 contract BHM is MiniMeToken, Blocked {
   struct AuctionStruct {
-  	address[] auctionAddr;	
+  	address[] auctionAddr;  		
   }
   
   mapping (address => AuctionStruct) AuctionStructs;
@@ -86,9 +86,11 @@ contract BHM is MiniMeToken, Blocked {
     return true;
   }
   
-  function createAuction(uint _biddingTime) public {
+  function createAuction(uint _biddingTime, string _owner, string _estateAddress, string _registrationNumber) public {
     //TODO add new information
-  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender));
+  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender, _estateAddress, _registrationNumber));
+  	
+  	//event 받아서 처리해야 한다
   }
   
   
