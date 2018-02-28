@@ -6,6 +6,7 @@ contract Auction {
     // or time periods in seconds.
     address public beneficiary;
     uint public auctionEnd;
+    address public tokenAddress;
 
     // Current state of the auction.
     address public highestBidder;

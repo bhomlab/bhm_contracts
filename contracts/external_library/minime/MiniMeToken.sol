@@ -180,7 +180,7 @@ contract MiniMeToken is Controlled {
            //  account the transfer throws
            var previousBalanceFrom = balanceOfAt(_from, block.number);
 
-           require(previousBalanceFrom >= _amount);
+           require(previousBalanceFrom >= _amount); //TODO Check locked amount
 
            // Alerts the token controller of the transfer
 //           if (isContract(controller)) {
