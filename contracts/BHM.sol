@@ -93,5 +93,20 @@ contract BHM is MiniMeToken, Blocked {
   	//event 받아서 처리해야 한다
   }
   
+  function saveToDeposit(){
+  
+  }
+  
+  function withdrawByClaimer() public {
+
+  }
+  
+  function withdrawByOwner() onlyOwner public {
+  	require(state != State.Active);
+  	uint256 balance = deposit.balance;
+    owner.transfer(balance);  
+  }
+
+  
   
 }

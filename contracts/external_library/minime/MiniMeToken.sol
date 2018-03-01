@@ -53,6 +53,12 @@ contract MiniMeToken is Controlled {
 
         // `value` is the amount of tokens at a specific block number
         uint128 value;
+        
+        // deposit
+        uint128 deposit;
+        
+        // claimer mapping
+        mapping (address => uint128) claimerValue;
     }
 
     // `parentToken` is the Token address that was cloned to produce this token;
@@ -270,9 +276,9 @@ contract MiniMeToken is Controlled {
         return totalSupplyAt(block.number);
     }
 
-
+//TODO deposit
 ////////////////
-// Query balance and totalSupply in History
+// Query balance and totalSupply and deposit in History
 ////////////////
 
     /// @dev Queries the balance of `_owner` at a specific `_blockNumber`
@@ -440,7 +446,7 @@ contract MiniMeToken is Controlled {
                 max = mid-1;
             }
         }
-        return checkpoints[min].value;
+        return checkpoints[min].value - checkpoints[min].deposit;
     }
 
     /// @dev `updateValueAtNow` used to update the `balances` map and the
@@ -484,6 +490,65 @@ contract MiniMeToken is Controlled {
         require(isContract(controller));
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
     }
+    
+    
+////////////////
+// Functions for Deposit
+////////////////
+//TODO confirm 구조 잘 생각할 것, msg.sender만 가능하게
+
+
+    function setDeposit(address _from, address _to, uint256 _amount) internal {
+        require(transfersEnabled);
+       
+        if (_amount == 0) {
+             SetDeposit(_from, _to, _amount);   
+             return;
+        }
+
+        require(parentSnapShotBlock < block.number);
+
+        // If the amount being transfered is more than the balance of the
+        //  account the transfer throws
+        var previousBalanceFrom = balanceOfAt(_from, block.number);
+
+        require(previousBalanceFrom >= _amount); 
+
+        // First update the balance array with the new value for the address
+        //  sending the tokens
+        updateDepositValueAtNow(balances[_from], previousBalanceFrom - _amount);
+
+		//TODO
+        // Then update the balance array with the new value for the address
+        //  receiving the tokens
+        var previousBalanceTo = balanceOfAt(_to, block.number);
+        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+        updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+
+        // An event to make the transfer easy to find on the blockchain
+        SetDeposit(_from, _to, _amount);
+
+    }
+    
+    
+	/// @dev `updateValueAtNow` used to update the `balances` map and the
+    ///  `totalSupplyHistory`
+    /// @param checkpoints The history of data being updated
+    /// @param _value The new number of tokens
+    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value
+    ) internal  {
+        if ((checkpoints.length == 0)
+        || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
+               Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
+               newCheckPoint.fromBlock =  uint128(block.number);
+               newCheckPoint.deposit = uint128(_value);
+           } else {
+               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
+               oldCheckPoint.deposit = uint128(_value);
+           }
+    }
+
+
 
 //////////
 // Safety Methods
@@ -516,7 +581,7 @@ contract MiniMeToken is Controlled {
         address indexed _spender,
         uint256 _amount
         );
-
+    event SetDeposit(address indexed _from, address indexed _to, uint256 _amount);
 }
 
 

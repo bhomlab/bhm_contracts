@@ -17,7 +17,7 @@ This is common function for BHOM smart contract.
 
 #### 1.1. Requirement
 
-1) Smart contract must have a deposit.
+1) Smart contract must have a deposit. //TODO 보증금
 2) Smart contract must have a user level policy. 
 3) Smart contract must have a cancel/refund function.
 4) Smart contract must offer optional confirmation of certified agent.
@@ -33,7 +33,7 @@ Deposit is one of the most important part of this smart contract. Only owner of 
 1) Safe withdraw by owner
 
 ```bash
-  function withdraw() onlyOwner public {
+  function withdrawByOwner() onlyOwner public {
   	require(state != State.Active);
   	uint256 balance = deposit.balance;
     owner.transfer(balance);  
@@ -125,7 +125,7 @@ Common information of real estate have to be saved in smart contract. But which 
 
 1) Invalid initial value
 2) Smaller amount of deposit than price
-3) 
+3) Fork of the token
 
 #### 1.4. Block Test Case
 
@@ -176,16 +176,74 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 
 BHM과 deposit의 관계 문제...
 minime token에 lock unlock을 넣어야 할듯?
-예치금 납부를 셀프로 해서 컨트랙에 넣어두고 빼가고 하면 될듯?
+예치금 납부를 셀프로 해서 컨트랙에 넣어두고 빼가고 하면 될듯? -> 안된다
+deposit을 어디에 만들 것인가?? BHM 컨트랙에 만들어야 할 듯? 아냐 근데 그러면 transfer로만 처리할 수가 없는데 controller 
 
 //TODO
 컨트롤러를 넘겨야 할 수도 있다.
+경매가 끝나야 withdraw가 가능하다?? 너무 길면?
 Highest bidder가 나타나면 withdraw가 가능해진다.
 
+#### 2.3. Exceptional Case
+
+1) Invalid initial value
+2) Smaller amount of deposit than price
+3) 
+
+#### 2.4. Block Test Case
 
 
 
-### 6 
+
+
+### 3. BHOM.FR.SMARTCONTRACT.LEASE
+
+#### 3.1. Requirement
+
+1) Smart contract must have a deposit for lease.
+2) Smart contract created by owner.
+3) Smart contract offer periodical payment function.
+
+#### 3.2. function description
+
+3.2.1 Deposit
+
+See 1.2.1
+
+3.2.2 Creation
+
+
+
+3.2.3 Payment
+
+Every period, owner get right for each payment.  
+
+```bash
+  uint8[] periodTimeStamp;
+  uint8 lastTimeStamp;
+  uint256 paymentAmount;
+  
+  mapping (address => Period) public periods;
+  
+  function addPayment(uint8 _paymentTimeStamp, uint256 _amount) public onlyOwner {
+    periodTimeStamp.push(_paymentTimeStamp);
+    paymentAmount = _amount;
+  }
+  
+  
+  
+```
+
+#### 3.3. Exceptional Case
+
+1) Invalid initial value
+
+#### 3.4. Block Test Case
+
+
+
+
+### 6. 
 ```bash
   function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
     require(_addr != address(0));
