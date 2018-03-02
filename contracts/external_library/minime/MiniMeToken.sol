@@ -593,8 +593,8 @@ contract MiniMeToken is Controlled {
     
     
 	//인출을 이행하는 함수 deposit에서 balance로의 이동
-	function withdrawDeposit () internal {
-	
+	function withdrawDeposit (address _from, address _to, uint _amount) internal {
+		
 	}
 	
 	
