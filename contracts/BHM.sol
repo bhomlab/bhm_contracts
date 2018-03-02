@@ -1,10 +1,32 @@
 pragma solidity ^0.4.18;
 
 import './external_library/minime/MiniMeToken.sol';
-import './internal_library/common/Blocked.sol';
 
+contract BHM is MiniMeToken {
 
-contract BHM is MiniMeToken, Blocked {
+////////////////
+// Functions for Block
+////////////////  
+  
+  mapping (address => bool) blocked;
+
+  event Blocked(address _addr);
+  event Unblocked(address _addr);
+  
+  function blockAddress(address _addr) public onlyController {
+    require(!blocked[_addr]);
+    blocked[_addr] = true;
+
+    Blocked(_addr);
+  }
+
+  function unblockAddress(address _addr) public onlyController {
+    require(blocked[_addr]);
+    blocked[_addr] = false;
+
+    Unblocked(_addr);
+  }
+  
   struct AuctionStruct {
   	address[] auctionAddr;  		
   }

@@ -498,7 +498,7 @@ contract MiniMeToken is Controlled {
 //TODO confirm 구조 잘 생각할 것, msg.sender만 가능하게
 
 
-    function setDeposit(address _from, address _to, uint256 _amount) internal {
+    function setDeposit(address _from, address _to, uint _amount) internal {
         require(transfersEnabled);
        
         if (_amount == 0) {
@@ -510,45 +510,95 @@ contract MiniMeToken is Controlled {
 
         // If the amount being transfered is more than the balance of the
         //  account the transfer throws
-        var previousBalanceFrom = balanceOfAt(_from, block.number);
+        var previousBalanceFrom = balanceOfAt(_from, block.number); //It already contains deposit logic
+		var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
 
         require(previousBalanceFrom >= _amount); 
-
+		// 1 way is enough?
         // First update the balance array with the new value for the address
         //  sending the tokens
-        updateDepositValueAtNow(balances[_from], previousBalanceFrom - _amount);
+        updateDepositValueAtNow(balances[_from], previousBalanceFrom + _amount, previousDepositValueFrom + _amount, _to);
 
-		//TODO
-        // Then update the balance array with the new value for the address
-        //  receiving the tokens
-        var previousBalanceTo = balanceOfAt(_to, block.number);
-        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-        // An event to make the transfer easy to find on the blockchain
+        // An event to make the deposit easy to find on the blockchain
         SetDeposit(_from, _to, _amount);
 
     }
     
-    
-	/// @dev `updateValueAtNow` used to update the `balances` map and the
-    ///  `totalSupplyHistory`
-    /// @param checkpoints The history of data being updated
-    /// @param _value The new number of tokens
-    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value
+    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value, uint _depositValue, address _to
     ) internal  {
         if ((checkpoints.length == 0)
         || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
                Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
                newCheckPoint.fromBlock =  uint128(block.number);
                newCheckPoint.deposit = uint128(_value);
+               newCheckPoint.claimerValue[_to] = uint128(_depositValue);
            } else {
                Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
                oldCheckPoint.deposit = uint128(_value);
+               oldCheckPoint.claimerValue[_to] = uint128(_depositValue);
            }
     }
 
+	//TODO parentToken은 depositBalance가 없다는 것에 유의
+    function depositBalanceOfAt(address _owner, uint _blockNumber) public constant
+        returns (uint) {
 
+        // These next few lines are used when the balance of the token is
+        //  requested before a check point was ever created for this token, it
+        //  requires that the `parentToken.balanceOfAt` be queried at the
+        //  genesis block for that token as this contains initial balance of
+        //  this token
+        if ((balances[_owner].length == 0)
+            || (balances[_owner][0].fromBlock > _blockNumber)) {
+            //TODO we have to check parent token at next fork
+            /*
+            if (address(parentToken) != 0) {
+                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
+            } else {
+                // Has no parent
+                return 0;
+            }
+            */
+            
+            return 0;
+            
+        // This will return the expected balance during normal situations
+        } else {
+            return getDepositValueAt(balances[_owner], _blockNumber);
+        }
+    }
+
+    function getDepositValueAt(Checkpoint[] storage checkpoints, uint _block
+    ) constant internal returns (uint) {
+        if (checkpoints.length == 0) return 0;
+
+        // Shortcut for the actual value
+        if (_block >= checkpoints[checkpoints.length-1].fromBlock)
+            return checkpoints[checkpoints.length-1].deposit;
+        if (_block < checkpoints[0].fromBlock) return 0;
+
+        // Binary search of the value in the array
+        uint min = 0;
+        uint max = checkpoints.length-1;
+        while (max > min) {
+            uint mid = (max + min + 1)/ 2;
+            if (checkpoints[mid].fromBlock<=_block) {
+                min = mid;
+            } else {
+                max = mid-1;
+            }
+        }
+        return checkpoints[min].deposit;
+    }
+    
+    
+	//인출을 이행하는 함수 deposit에서 balance로의 이동
+	function withdrawDeposit () internal {
+	
+	}
+	
+	
+	
 
 //////////
 // Safety Methods
