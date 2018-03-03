@@ -512,30 +512,31 @@ contract MiniMeToken is Controlled {
         //  account the transfer throws
         var previousBalanceFrom = balanceOfAt(_from, block.number); //It already contains deposit logic
 		var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+		var claimerDepositValue = claimerBalanceAt(_from, block.number, _to);
 
         require(previousBalanceFrom >= _amount); 
 		// 1 way is enough?
         // First update the balance array with the new value for the address
         //  sending the tokens
-        updateDepositValueAtNow(balances[_from], previousBalanceFrom + _amount, previousDepositValueFrom + _amount, _to);
+        updateDepositValueAtNow(balances[_from], previousDepositValueFrom + _amount, claimerDepositValue + _amount, _to);
 
         // An event to make the deposit easy to find on the blockchain
         SetDeposit(_from, _to, _amount);
 
     }
     
-    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value, uint _depositValue, address _to
+    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _depositValue, uint _claimerDepositValue, address _to
     ) internal  {
         if ((checkpoints.length == 0)
         || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
                Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
                newCheckPoint.fromBlock =  uint128(block.number);
-               newCheckPoint.deposit = uint128(_value);
-               newCheckPoint.claimerValue[_to] = uint128(_depositValue);
+               newCheckPoint.deposit = uint128(_depositValue);
+               newCheckPoint.claimerValue[_to] = uint128(_claimerDepositValue);
            } else {
                Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-               oldCheckPoint.deposit = uint128(_value);
-               oldCheckPoint.claimerValue[_to] = uint128(_depositValue);
+               oldCheckPoint.deposit = uint128(_depositValue);
+               oldCheckPoint.claimerValue[_to] = uint128(_claimerDepositValue);
            }
     }
 
@@ -553,7 +554,7 @@ contract MiniMeToken is Controlled {
             //TODO we have to check parent token at next fork
             /*
             if (address(parentToken) != 0) {
-                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
+                return parentToken.depositBalanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
             } else {
                 // Has no parent
                 return 0;
@@ -592,12 +593,82 @@ contract MiniMeToken is Controlled {
     }
     
     
+	
+	function claimerBalanceAt(address _owner, uint _blockNumber, address _to) public constant
+        returns (uint) {
+
+        // These next few lines are used when the balance of the token is
+        //  requested before a check point was ever created for this token, it
+        //  requires that the `parentToken.balanceOfAt` be queried at the
+        //  genesis block for that token as this contains initial balance of
+        //  this token
+        if ((balances[_owner].length == 0)
+            || (balances[_owner][0].fromBlock > _blockNumber)) {
+            //TODO we have to check parent token at next fork
+            /*
+            if (address(parentToken) != 0) {
+                return parentToken.claimerBalanceAt(_owner, min(_blockNumber, parentSnapShotBlock));
+            } else {
+                // Has no parent
+                return 0;
+            }
+            */
+            
+            return 0;
+            
+        // This will return the expected balance during normal situations
+        } else {
+            return getClaimerValueAt(balances[_owner], _blockNumber, _to);
+        }
+    }
+    
+    function getClaimerValueAt(Checkpoint[] storage checkpoints, uint _block, address _to
+    ) constant internal returns (uint) {
+        if (checkpoints.length == 0) return 0;
+
+        // Shortcut for the actual value
+        if (_block >= checkpoints[checkpoints.length-1].fromBlock)
+            return checkpoints[checkpoints.length-1].deposit;
+        if (_block < checkpoints[0].fromBlock) return 0;
+
+        // Binary search of the value in the array
+        uint min = 0;
+        uint max = checkpoints.length-1;
+        while (max > min) {
+            uint mid = (max + min + 1)/ 2;
+            if (checkpoints[mid].fromBlock<=_block) {
+                min = mid;
+            } else {
+                max = mid-1;
+            }
+        }
+        return checkpoints[min].claimerValue[_to];
+    }
+        
 	//인출을 이행하는 함수 deposit에서 balance로의 이동
 	function withdrawDeposit (address _from, address _to, uint _amount) internal {
+		if (_amount == 0) {
+             WithdrawDeposit(_from, _to, _amount);   
+             return;
+        }
+        
+        var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+        var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
+        var previousBalanceTo = balanceOfAt(_to, block.number); 
+        var previousBalanceFrom = balanceOfAt(_from, block.number);
+                
+        require(previousDepositValueFrom >= _amount);
+        require(previousClaimerValue >= _amount);
+        
+        //1 update deposit value
+        updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
+		//2 update from balance 
+		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 		
+        // An event to make the deposit easy to find on the blockchain
+        SetDeposit(_from, _to, _amount);        
 	}
-	
-	
+    
 	
 
 //////////
@@ -632,6 +703,7 @@ contract MiniMeToken is Controlled {
         uint256 _amount
         );
     event SetDeposit(address indexed _from, address indexed _to, uint256 _amount);
+    event WithdrawDeposit(address indexed _from, address indexed _to, uint256 _amount);
 }
 
 

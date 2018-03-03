@@ -115,8 +115,33 @@ contract BHM is MiniMeToken {
   	//event 받아서 처리해야 한다
   }
   
-  function saveToDeposit(){
+////////////////
+// Functions for Lease
+////////////////    
+
+  //1. create lease
+  //1.1 set condition
   
+  
+  //2. apply lease
+  
+  //3. confirm contract by CA
+  
+  //4. withdraw when reached
+  
+  
+////////////////
+// Functions for Deposit
+////////////////  
+  //TODO
+  
+  
+  
+  function saveToDeposit(){
+  	address _from = msg.sender;
+  	address _to = getOwnerAddress();
+  	
+  	setDeposit(address _from, address _to, uint _amount);
   }
   
   function withdrawByClaimer() public {

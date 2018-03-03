@@ -5,9 +5,8 @@
 1) BHOM.FR.SMARTCONTRACT.COMMON
 2) BHOM.FR.SMARTCONTRACT.AUCTION
 3) BHOM.FR.SMARTCONTRACT.LEASE
-4) BHOM.FR.SMARTCONTRACT.TRADE
-5) BHOM.FR.SMARTCONTRACT.SALE
-6) BHOM.FR.SMARTCONTRACT.MIGRATION
+4) BHOM.FR.SMARTCONTRACT.SALE
+5) BHOM.FR.SMARTCONTRACT.MIGRATION
 
 ### 0. ABSTRACT 
 
@@ -119,6 +118,24 @@ Common information of real estate have to be saved in smart contract. But which 
 2) Registration number
 3) Price
 4) Type of transaction 
+
+1.2.5 Registration
+
+Unless traditional registration system is replaced by blockchain, 
+
+1.2.6 Effective Gas Usage
+
+Put data into permanent storage is quite expensive. If possible, we have to avoid using permanent storage.
+
+```bash
+  function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
+    require(_addr != address(0));
+    require(admin[_addr] == !_value);
+    certifiedAgent[_addr] = _value;
+  }
+```
+
+
 
 
 #### 1.3. Exceptional Case
@@ -240,16 +257,8 @@ Every period, owner get right for each payment.
 
 #### 3.4. Block Test Case
 
+1) Set invalid initial value
+2) Check every period of lease is paid
 
-
-
-### 6. 
-```bash
-  function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
-    require(_addr != address(0));
-    require(admin[_addr] == !_value);
-    certifiedAgent[_addr] = _value;
-  }
-```
 
  
