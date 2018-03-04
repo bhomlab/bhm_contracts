@@ -118,23 +118,60 @@ contract BHM is MiniMeToken {
 ////////////////
 // Functions for Lease
 ////////////////    
+//TODO 계약만 스마트 컨트랙으로 하도록 바꿀까?
+
+  struct LeaseStruct {
+    bool isUsed;
+  	uint256 deposit;
+  	uint256 leaseFee;
+  	uint256[] paymentTimestamp;
+  }
+  //KEY IS LEASETIMESTAMP == NOW
+  mapping (address => mapping(uint256 => LeaseStructs) leaseStructs;
+  
 
   //1. create lease
   //1.1 set condition
-  
+  //owner
+  //use CA
+  //real estate information
+  //CA fee
+  //check 128 or 256
+  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, unit256[] _paymentTimestamp) public returns (uint256){
+  	
+  	//check condition
+  	
+  	//unique key owner x timestamp, default value of mapping is 0
+  	require(leaseStructs[msg.sender][now].isUsed == false);
+  	leaseStructs[msg.sender][now].deposit = _deposit;
+  	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
+  	leaseStructs[msg.sender][now].isUsed = true;
+  	//TODO
+  	//push paymentTimestamp;
+  	
+  	CreateLease();
+  }
   
   //2. apply lease
+  //check condition
+  //set deposit for owner
+  //
   
   //3. confirm contract by CA
+  //check condition
+  //CA confirmed
+  //CA bonus?
   
-  //4. withdraw when reached
   
+  //4. withdraw when time over
+  
+  
+  event CreateLease();
   
 ////////////////
 // Functions for Deposit
 ////////////////  
   //TODO
-  
   
   
   function saveToDeposit(){
