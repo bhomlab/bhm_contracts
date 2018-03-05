@@ -16,14 +16,12 @@ contract BHM is MiniMeToken {
   function blockAddress(address _addr) public onlyController {
     require(!blocked[_addr]);
     blocked[_addr] = true;
-
     Blocked(_addr);
   }
 
   function unblockAddress(address _addr) public onlyController {
     require(blocked[_addr]);
     blocked[_addr] = false;
-
     Unblocked(_addr);
   }
   
@@ -70,14 +68,6 @@ contract BHM is MiniMeToken {
   function destroyTokens(address _owner, uint _amount) public onlyController  returns (bool) {
     return super.destroyTokens(_owner, _amount);
   }
-
-  function blockAddress(address _addr) public onlyController {
-    super.blockAddress(_addr);
-  }
-
-  function unblockAddress(address _addr) public onlyController {
-    super.unblockAddress(_addr);
-  }
   
   function enableTransfers(bool _transfersEnabled) public onlyController {
     super.enableTransfers(_transfersEnabled);
@@ -121,13 +111,14 @@ contract BHM is MiniMeToken {
 //TODO 계약만 스마트 컨트랙으로 하도록 바꿀까?
 
   struct LeaseStruct {
-    bool isUsed;
-  	uint256 deposit;
+    uint256 deposit;
   	uint256 leaseFee;
   	uint256[] paymentTimestamp;
+  	bool isUsed;
+    bool lock;
   }
   //KEY IS LEASETIMESTAMP == NOW
-  mapping (address => mapping(uint256 => LeaseStructs) leaseStructs;
+  mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
   
 
   //1. create lease
@@ -137,7 +128,7 @@ contract BHM is MiniMeToken {
   //real estate information
   //CA fee
   //check 128 or 256
-  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, unit256[] _paymentTimestamp) public returns (uint256){
+  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
   	
   	//check condition
   	
@@ -146,16 +137,32 @@ contract BHM is MiniMeToken {
   	leaseStructs[msg.sender][now].deposit = _deposit;
   	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
   	leaseStructs[msg.sender][now].isUsed = true;
-  	//TODO
-  	//push paymentTimestamp;
+  	leaseStructs[msg.sender][now].lock = false;
+  	//TODO check length
+  	for(uint i = 0; i < _paymentTimestamp.length; ++i){
+  		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
+  	}
   	
-  	CreateLease();
+  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
   }
   
   //2. apply lease
-  //check condition
-  //set deposit for owner
-  //
+ 
+  //TODO
+  function applyLease(address _to, uint256 keyTimeStamp){
+  	//check lock
+  	require(leaseStructs[_to][keyTimeStamp].lock == false);
+  	//check enough balance already done in token?  	
+  	//set deposit for owner
+  	//check uint128
+  	uint _amount = leaseStructs[msg.sender][now].deposit + (leaseStructs[msg.sender][now].leaseFee * (leaseStructs[msg.sender][now].paymentTimestamp.length + 1));
+  	
+  	setDeposit(msg.sender, _to, _amount);
+  	
+  	//set lock
+  	leaseStructs[_to][keyTimeStamp].lock = true;
+  	
+  }
   
   //3. confirm contract by CA
   //check condition
@@ -166,20 +173,13 @@ contract BHM is MiniMeToken {
   //4. withdraw when time over
   
   
-  event CreateLease();
+  event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   
 ////////////////
 // Functions for Deposit
 ////////////////  
   //TODO
   
-  
-  function saveToDeposit(){
-  	address _from = msg.sender;
-  	address _to = getOwnerAddress();
-  	
-  	setDeposit(address _from, address _to, uint _amount);
-  }
   
   function withdrawByClaimer() public {
 
