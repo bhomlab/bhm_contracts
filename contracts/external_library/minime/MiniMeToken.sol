@@ -660,9 +660,9 @@ contract MiniMeToken is Controlled {
         require(previousDepositValueFrom >= _amount);
         require(previousClaimerValue >= _amount);
         
-        //1 update deposit value
+        //update deposit value
         updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
-		//2 update from balance 
+		//update from balance 
 		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 		
         // An event to make the deposit easy to find on the blockchain

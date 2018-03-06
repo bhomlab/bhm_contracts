@@ -25,23 +25,17 @@ contract BHM is MiniMeToken {
     Unblocked(_addr);
   }
   
-  struct AuctionStruct {
-  	address[] auctionAddr;  		
-  }
-  
-  mapping (address => AuctionStruct) AuctionStructs;
-
-  mapping (address => bool) public admin;
-
   modifier onlyNotBlocked(address _addr) {
     require(!blocked[_addr]);
     _;
   }
   
-  modifier onlyAdmin() {
-    require(admin[msg.sender]);
-    _;
+  
+  struct AuctionStruct {
+  	address[] auctionAddr;  		
   }
+  
+  mapping (address => AuctionStruct) AuctionStructs;
 
   function BHM(address _tokenFactory) MiniMeToken(
     _tokenFactory,
@@ -83,6 +77,19 @@ contract BHM is MiniMeToken {
     return true;
   }
 
+////////////////
+// Functions for User Level Policy
+////////////////  
+
+  mapping (address => bool) public admin;
+  
+  modifier onlyAdmin() {
+    require(admin[msg.sender]);
+    _;
+  }
+ 
+  mapping (address => bool) public certifiedAgent;
+
   function setAdmin(address _addr, bool _value)
     public
     onlyController
@@ -97,6 +104,13 @@ contract BHM is MiniMeToken {
 
     return true;
   }
+  
+  function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
+    require(_addr != address(0));
+    require(admin[_addr] == !_value);
+    certifiedAgent[_addr] = _value;
+  }
+  
   
   function createAuction(uint _biddingTime, string _owner, string _estateAddress, string _registrationNumber) public {
     //TODO add new information
@@ -114,6 +128,7 @@ contract BHM is MiniMeToken {
     uint256 deposit;
   	uint256 leaseFee;
   	uint256[] paymentTimestamp;
+  	address rent;
   	bool isUsed;
     bool lock;
   }
@@ -123,7 +138,7 @@ contract BHM is MiniMeToken {
 
   //1. create lease
   //1.1 set condition
-  //owner
+  
   //use CA
   //real estate information
   //CA fee
@@ -149,18 +164,19 @@ contract BHM is MiniMeToken {
   //2. apply lease
  
   //TODO
-  function applyLease(address _to, uint256 keyTimeStamp){
+  function applyLease(address _to, uint256 _keyTimeStamp) public {
   	//check lock
   	require(leaseStructs[_to][keyTimeStamp].lock == false);
-  	//check enough balance already done in token?  	
   	//set deposit for owner
   	//check uint128
-  	uint _amount = leaseStructs[msg.sender][now].deposit + (leaseStructs[msg.sender][now].leaseFee * (leaseStructs[msg.sender][now].paymentTimestamp.length + 1));
+  	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
   	
   	setDeposit(msg.sender, _to, _amount);
   	
   	//set lock
-  	leaseStructs[_to][keyTimeStamp].lock = true;
+  	leaseStructs[_to][_keyTimeStamp].lock = true;
+  	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
+  	//event
   	
   }
   
@@ -168,7 +184,10 @@ contract BHM is MiniMeToken {
   //check condition
   //CA confirmed
   //CA bonus?
+  function confirmLeaseByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+  	
   
+  }
   
   //4. withdraw when time over
   
