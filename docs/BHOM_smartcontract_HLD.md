@@ -16,7 +16,7 @@ This is common function for BHOM smart contract.
 
 #### 1.1. Requirement
 
-1) Smart contract must have a deposit. //TODO 보증금
+1) Smart contract must have a deposit. 
 2) Smart contract must have a user level policy. 
 3) Smart contract must have a cancel/refund function.
 4) Smart contract must offer optional confirmation of certified agent.
@@ -27,16 +27,29 @@ This is common function for BHOM smart contract.
 
 1.2.1 Deposit
 
-Deposit is one of the most important part of this smart contract. Only owner of deposit can withdraw token from vault. Deposit has these functions such as,
+Deposit is one of the most important part of this smart contract. Only authorized person of deposit can withdraw tokens. Deposit has these functions such as,
 
 1) Safe withdraw by owner
 
 ```bash
-  function withdrawByOwner() onlyOwner public {
-  	require(state != State.Active);
-  	uint256 balance = deposit.balance;
-    owner.transfer(balance);  
-  }
+  function withdrawDeposit (address _from, address _to, uint _amount) internal {
+		if (_amount == 0) {
+             WithdrawDeposit(_from, _to, _amount);   
+             return;
+        }        
+        var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+        var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
+        var previousBalanceTo = balanceOfAt(_to, block.number); 
+        var previousBalanceFrom = balanceOfAt(_from, block.number);                
+        require(previousDepositValueFrom >= _amount);
+        require(previousClaimerValue >= _amount);        
+        //update deposit value
+        updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
+		//update from balance 
+		updateValueAtNow(balances[_to], previousBalanceTo + _amount);		
+        // An event to make the deposit easy to find on the blockchain
+        SetDeposit(_from, _to, _amount);        
+	}
 ```
 
 //TODO
@@ -164,8 +177,7 @@ See 1.2.1
 
 2.2.2 Creation
 
-//TODO 생성 시에 BHM 컨트랙 주소를 등록하고 거기서 CA임을 확인한다?
-Transaction smart contract created by owner. Owner is 'Who want to sell real estate'. When initiating, BHM Token contract address must be saved in transaction smart contract.
+Transaction created by owner. Owner is 'Who want to sell real estate'. 
 
 ```bash
   function Auction(uint _biddingTime, address _beneficiary ) public {
@@ -191,13 +203,7 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 
 2.2.4 Bidding by BHM
 
-BHM과 deposit의 관계 문제...
-minime token에 lock unlock을 넣어야 할듯?
-예치금 납부를 셀프로 해서 컨트랙에 넣어두고 빼가고 하면 될듯? -> 안된다
-deposit을 어디에 만들 것인가?? BHM 컨트랙에 만들어야 할 듯? 아냐 근데 그러면 transfer로만 처리할 수가 없는데 controller 
 
-//TODO
-컨트롤러를 넘겨야 할 수도 있다.
 경매가 끝나야 withdraw가 가능하다?? 너무 길면?
 Highest bidder가 나타나면 withdraw가 가능해진다.
 
@@ -229,7 +235,42 @@ See 1.2.1
 
 3.2.2 Creation
 
+Transaction created by owner. Lease can be done simple contract. It does not need double confirm.
 
+```bash
+  struct LeaseStruct {
+    uint256 deposit;
+  	uint256 leaseFee;
+  	uint256[] paymentTimestamp;
+  	address rent;
+  	address confirmedCA;
+  	address doubleConfirmedCA;
+  	bool isUsed;
+    bool lock;
+    bool isConfirmed;
+  }
+  //KEY IS LEASETIMESTAMP == NOW
+  mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
+
+  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
+  	
+  	//check condition
+  	
+  	//unique key owner x timestamp, default value of mapping is 0
+  	require(leaseStructs[msg.sender][now].isUsed == false);
+  	leaseStructs[msg.sender][now].deposit = _deposit;
+  	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
+  	leaseStructs[msg.sender][now].isUsed = true;
+  	leaseStructs[msg.sender][now].lock = false;
+  	//TODO check length
+  	for(uint i = 0; i < _paymentTimestamp.length; ++i){
+  		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
+  	}
+  	
+  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
+  }
+  
+```
 
 3.2.3 Payment
 
@@ -246,9 +287,6 @@ Every period, owner get right for each payment.
     periodTimeStamp.push(_paymentTimeStamp);
     paymentAmount = _amount;
   }
-  
-  
-  
 ```
 
 #### 3.3. Exceptional Case
@@ -259,6 +297,29 @@ Every period, owner get right for each payment.
 
 1) Set invalid initial value
 2) Check every period of lease is paid
+
+
+
+### 4. BHOM.FR.SMARTCONTRACT.SALE
+
+#### 4.1. Requirement
+
+1) Smart contract must have a deposit for sale.
+2) Smart contract created by owner.
+3) Smart contract offer double confirm function.
+4) Smart contract have a event for register.
+
+#### 4.2. function description
+
+4.2.1 Deposit
+
+See 1.2.1
+
+4.2.2 Creation
+
+Transaction created by owner. 
+
+
 
 
  
