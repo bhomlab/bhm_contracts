@@ -129,8 +129,11 @@ contract BHM is MiniMeToken {
   	uint256 leaseFee;
   	uint256[] paymentTimestamp;
   	address rent;
+  	address confirmedCA;
+  	address doubleConfirmedCA;
   	bool isUsed;
     bool lock;
+    bool isConfirmed;
   }
   //KEY IS LEASETIMESTAMP == NOW
   mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
@@ -177,22 +180,44 @@ contract BHM is MiniMeToken {
   	leaseStructs[_to][_keyTimeStamp].lock = true;
   	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
   	//event
-  	
+  	ApplyLease(_to, _keyTimeStamp, msg.sender);
   }
   
   //3. confirm contract by CA
   //check condition
   //CA confirmed
   //CA bonus?
+  //for just lease, we don't need multi check
   function confirmLeaseByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
-  	
-  
+  	//check it is locked
+  	require(leaseStructs[_target][_keyTimeStamp].lock == true);
+  	//need multi check?
+    require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
+    //confirm
+    leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
+    //fee?
+    
+    
   }
+
   
   //4. withdraw when time over
+  function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+	
+    
+    
+  }
+  
+  
+  //5. withdraw pre-deposit
+  
+  //6. cancel lease before confirm
+  
   
   
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
+  event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
+  
   
 ////////////////
 // Functions for Deposit
