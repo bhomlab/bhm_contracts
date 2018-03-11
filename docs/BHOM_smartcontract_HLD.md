@@ -319,6 +319,56 @@ See 1.2.1
 
 Transaction created by owner. 
 
+4.2.3 Double Confirm
+
+4.2.4 Event for Register
+
+#### 4.3. Exceptional Case
+
+1) Invalid initial value
+
+#### 4.4. Block Test Case
+
+1) Set invalid initial value
+
+
+### 5. BHOM.FR.SMARTCONTRACT.MIGRATION
+
+#### 5.1. Requirement
+
+1) Smart contract must have a data for migration.
+
+#### 5.2. function description
+
+5.2.1 Migration
+
+Every fork, all data can be accessed by next token. Using minime token, we can access previous data. And also unimportant data will be saved at traditional database. Checkpoint is struct for saving data(especially tokens). We also need similar struct for saving contract data.
+
+```bash
+    struct  Checkpoint {
+        uint128 fromBlock;
+        uint128 value;
+        uint128 deposit;
+        mapping (address => uint128) claimerValue;
+    }    
+    struct CheckpointForContract {
+    
+    
+	}    
+```
+
+#### 5.3. Exceptional Case
+
+1) Invalid initial value
+
+#### 5.4. Block Test Case
+
+1) Set invalid initial value
+
+
+
+ 
+
 
 
 
