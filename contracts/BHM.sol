@@ -134,6 +134,7 @@ contract BHM is MiniMeToken {
   	bool isUsed;
     bool lock;
     bool isConfirmed;
+    bool[] isPaid;
   }
   //KEY IS LEASETIMESTAMP == NOW
   mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
@@ -159,6 +160,7 @@ contract BHM is MiniMeToken {
   	//TODO check length
   	for(uint i = 0; i < _paymentTimestamp.length; ++i){
   		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
+  		leaseStructs[msg.sender][now].isPaid.push(false);
   	}
   	
   	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
@@ -202,10 +204,17 @@ contract BHM is MiniMeToken {
 
   
   //4. withdraw when time over
-  function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+  function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public {
 	
-    
-    
+    for(uint i = 0; i < leaseStructs[msg.sender][now].paymentTimestamp.length; ++i){
+    	if((leaseStructs[msg.sender][now].paymentTimestamp[i]) <= now) && (leaseStructs[msg.sender][now].isPaid[i] == false)){
+    		leaseStructs[msg.sender][now].isPaid[i] = true;
+    		//withdraw
+    		
+    	}
+  		
+  		
+  	}
   }
   
   
