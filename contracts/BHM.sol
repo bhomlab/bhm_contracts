@@ -123,14 +123,14 @@ contract BHM is MiniMeToken {
 // Functions for Lease
 ////////////////    
 //TODO 계약만 스마트 컨트랙으로 하도록 바꿀까?
-
+//TODO We have to save this in minime token
   struct LeaseStruct {
+  	uint256[] paymentTimestamp;
     uint256 deposit;
   	uint256 leaseFee;
-  	uint256[] paymentTimestamp;
+  	uint256 agentFee;
   	address rent;
   	address confirmedCA;
-  	address doubleConfirmedCA;
   	bool isUsed;
     bool lock;
     bool isConfirmed;
@@ -147,7 +147,7 @@ contract BHM is MiniMeToken {
   //real estate information
   //CA fee
   //check 128 or 256
-  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
+  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256){
   	
   	//check condition
   	
@@ -157,6 +157,7 @@ contract BHM is MiniMeToken {
   	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
   	leaseStructs[msg.sender][now].isUsed = true;
   	leaseStructs[msg.sender][now].lock = false;
+  	leaseStructs[msg.sender][now].agentFee = _agentFee;
   	//TODO check length
   	for(uint i = 0; i < _paymentTimestamp.length; ++i){
   		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
@@ -195,6 +196,7 @@ contract BHM is MiniMeToken {
   	require(leaseStructs[_target][_keyTimeStamp].lock == true);
   	//need multi check?
     require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
+    //check enough agentFee
     //confirm
     leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
     //fee?
@@ -227,7 +229,43 @@ contract BHM is MiniMeToken {
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
   
-  
+////////////////
+// Functions for Sale
+////////////////    
+  struct SaleStruct {
+    uint256 deposit;
+  	uint256 leaseFee;
+  	uint256 agentFee;
+  	address rent;
+  	address confirmedCA;
+  	address doubleConfirmedCA;
+  	bool isUsed;
+    bool lock;
+    bool isConfirmed;
+    bool isPaid;
+  }
+  //KEY IS LEASETIMESTAMP == NOW
+  mapping (address => mapping(uint256 => SaleStruct)) saleStructs;
+
+  function createSale(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256){
+  	
+  	//check condition
+  	
+  	//unique key owner x timestamp, default value of mapping is 0
+  	require(leaseStructs[msg.sender][now].isUsed == false);
+  	leaseStructs[msg.sender][now].deposit = _deposit;
+  	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
+  	leaseStructs[msg.sender][now].isUsed = true;
+  	leaseStructs[msg.sender][now].lock = false;
+  	leaseStructs[msg.sender][now].agentFee = _agentFee;
+  	//TODO check length
+  	for(uint i = 0; i < _paymentTimestamp.length; ++i){
+  		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
+  		leaseStructs[msg.sender][now].isPaid.push(false);
+  	}
+  	
+  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
+  }
 ////////////////
 // Functions for Deposit
 ////////////////  
