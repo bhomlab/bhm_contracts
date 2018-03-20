@@ -211,15 +211,15 @@ contract BHM is MiniMeToken {
 
   
   //4. withdraw when time over
-  function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public {
+  function withdrawLeaseFee(uint256 _keyTimeStamp) public {
 	//require ownership
-	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);	
+	require(msg.sender == leaseStructs[msg.sender][_keyTimeStamp].rent);	
     //is there a faster way?
-    for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
-    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[leaseStructs][_keyTimeStamp].isPaid[i] == false)){
-    		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
+    for(uint i = 0; i < leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length; ++i){
+    	if((leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
+    		leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
-    		transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
+    		transferFrom(msg.sender, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
     	}
   	}
   	
