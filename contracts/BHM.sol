@@ -208,16 +208,19 @@ contract BHM is MiniMeToken {
   //4. withdraw when time over
   function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public {
 	
-    for(uint i = 0; i < leaseStructs[msg.sender][now].paymentTimestamp.length; ++i){
-    	if((leaseStructs[msg.sender][now].paymentTimestamp[i]) <= now) && (leaseStructs[msg.sender][now].isPaid[i] == false)){
-    		leaseStructs[msg.sender][now].isPaid[i] = true;
+    for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
+    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == false)){
+    		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
+    		withdrawDeposit(msg.sender, _target, leaseStructs[_target][_keyTimeStamp].leaseFee);
     		
+    		WithdrawLeaseFee(msg.sender, _target, leaseStructs[_target][_keyTimeStamp].leaseFee);
     	}
   		
   		
   	}
   }
+  
   
   
   //5. withdraw pre-deposit
@@ -228,6 +231,7 @@ contract BHM is MiniMeToken {
   
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
+  event WithdrawLeaseFee(address _from, address _to, uint256 amount);
   
 ////////////////
 // Functions for Sale
