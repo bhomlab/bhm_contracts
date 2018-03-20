@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 import './external_library/minime/MiniMeToken.sol';
 
@@ -81,6 +81,11 @@ contract BHM is MiniMeToken {
 // Functions for User Level Policy
 ////////////////  
 
+  modifier onlyCertifiedAgent {
+   require(certifiedAgent[msg.sender]);
+    _;
+  }
+
   mapping (address => bool) public admin;
   
   modifier onlyAdmin() {
@@ -110,14 +115,15 @@ contract BHM is MiniMeToken {
     require(admin[_addr] == !_value);
     certifiedAgent[_addr] = _value;
   }
+    
+  event SetAdmin(address _addr);
   
-  
-  function createAuction(uint _biddingTime, string _owner, string _estateAddress, string _registrationNumber) public {
-    //TODO add new information
-  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender, _estateAddress, _registrationNumber));
-  	
-  	//event 받아서 처리해야 한다
-  }
+//  function createAuction(uint _biddingTime, string _owner, string _estateAddress, string _registrationNumber) public {
+//    //TODO add new information
+//  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender, _estateAddress, _registrationNumber));
+//  	
+//  	//event 받아서 처리해야 한다
+//  }
   
 ////////////////
 // Functions for Lease
@@ -137,7 +143,7 @@ contract BHM is MiniMeToken {
     bool[] isPaid;
   }
   //KEY IS LEASETIMESTAMP == NOW
-  mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
+  mapping (address => mapping(uint256 => LeaseStruct)) leaseStructs;
   
 
   //1. create lease
@@ -172,7 +178,7 @@ contract BHM is MiniMeToken {
   //TODO
   function applyLease(address _to, uint256 _keyTimeStamp) public {
   	//check lock
-  	require(leaseStructs[_to][keyTimeStamp].lock == false);
+  	require(leaseStructs[_to][_keyTimeStamp].lock == false);
   	//set deposit for owner
   	//check uint128
   	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
@@ -212,14 +218,12 @@ contract BHM is MiniMeToken {
   
   //4. withdraw when time over
   function withdrawLeaseFee(uint256 _keyTimeStamp) public {
-	//require ownership
-	require(msg.sender == leaseStructs[msg.sender][_keyTimeStamp].rent);	
-    //is there a faster way?
+	//is there a faster way?
     for(uint i = 0; i < leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length; ++i){
-    	if((leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
+    	if( (leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
     		leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
-    		transferFrom(msg.sender, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
+    		transferFrom(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
     	}
   	}
   	
@@ -232,7 +236,7 @@ contract BHM is MiniMeToken {
   	//require ownership
 	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
 	for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
-    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[leaseStructs][_keyTimeStamp].isPaid[i] == false)){
+    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == false)){
     		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
     		transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
@@ -251,6 +255,7 @@ contract BHM is MiniMeToken {
   
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
+  event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp);
   
 ////////////////
 // Functions for Sale
@@ -282,27 +287,15 @@ contract BHM is MiniMeToken {
   	saleStructs[msg.sender][now].agentFee = _agentFee;
 
 	  	
-  	CreateSale(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
+  	CreateSale(_deposit, _useCA,  now, msg.sender);
   }
   
   
-  
+  event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   
 ////////////////
 // Functions for Deposit
 ////////////////  
-  //TODO
-  
-  
-  function withdrawByClaimer() public {
-
-  }
-  
-  function withdrawByOwner() onlyOwner public {
-  	require(state != State.Active);
-  	uint256 balance = deposit.balance;
-    owner.transfer(balance);  
-  }
 
   
   
