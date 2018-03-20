@@ -176,9 +176,13 @@ contract BHM is MiniMeToken {
   	//set deposit for owner
   	//check uint128
   	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
-  	
-  	setDeposit(msg.sender, _to, _amount);
-  	
+  	require(_amount >= balanceOfAt(msg.sender, block.number));
+  	//월세를 deposit으로 잡고
+  	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
+  	//보증금을 넣어주고
+  	transferFrom(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
+  	//소유주에서 빌린 사람에게로 오는 deposit으로 잡자
+  	setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
   	//set lock
   	leaseStructs[_to][_keyTimeStamp].lock = true;
   	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
@@ -198,30 +202,48 @@ contract BHM is MiniMeToken {
     require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
     //check enough agentFee
     require(leaseStructs[_target][_keyTimeStamp].leaseFee >= balanceOfAt(_target, block.number));
-    //confirm
-    leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
     //fee?
-    
-    
+    transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
+	//confirm
+    leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
+    ConfirmLeaseByCA(_target, _keyTimeStamp);
   }
 
   
   //4. withdraw when time over
   function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public {
-	
-    for(uint i = 0; i < leaseStructs[msg.sender][now].paymentTimestamp.length; ++i){
-    	if((leaseStructs[msg.sender][now].paymentTimestamp[i]) <= now) && (leaseStructs[msg.sender][now].isPaid[i] == false)){
-    		leaseStructs[msg.sender][now].isPaid[i] = true;
+	//require ownership
+	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);	
+    //is there a faster way?
+    for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
+    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[leaseStructs][_keyTimeStamp].isPaid[i] == false)){
+    		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
-    		
+    		transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
     	}
-  		
-  		
   	}
+  	
   }
   
   
   //5. withdraw pre-deposit
+  //소유주 -> 빌린 사람
+  function withdrawPreDeposit(address _target, uint256 _keyTimeStamp) public {
+  	//require ownership
+	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
+	for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
+    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i]) <= now) && (leaseStructs[leaseStructs][_keyTimeStamp].isPaid[i] == false)){
+    		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
+    		//withdraw
+    		transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
+    	}
+    }
+	
+	
+		
+  }
+  
+  
   
   //6. cancel lease before confirm
   
