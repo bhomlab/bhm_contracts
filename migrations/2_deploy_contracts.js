@@ -1,8 +1,5 @@
 const moment = require("moment");
 const { sprintf } = require("sprintf-js");
-
-
-
 const { ether } = require("./lib/utils");
 
 const MiniMeTokenFactory = artifacts.require("./MiniMeTokenFactory.sol");
@@ -11,16 +8,10 @@ const BHM = artifacts.require("./BHM.sol");
 const BigNumber = web3.BigNumber;
 const addressFormat = "%35s\t%50s";
 
-const queue = [];
-const clearQueue = async () => {
-  let p;
-  while (p = queue.pop()) {
-    await p;
-  }
-  return true;
-};
-
 const logAccount = (account, i) => console.log(`[${ i }] ${ account }`);
+
+//TEST
+const generateTestTokens = require("./lib/generateTestTokens");
 
 module.exports = async function (deployer, network, accounts) {
   accounts.map(logAccount);
@@ -54,12 +45,13 @@ module.exports = async function (deployer, network, accounts) {
       MiniMeTokenFactory
       ]).then(async () => {
       // load contract instances
-      factory = await MiniMeTokenFactory.deployed();
-      
+      factory = await MiniMeTokenFactory.deployed();      
       // deploy token
       return deployer.deploy(BHM, factory.address);
     }).then(async () => {
       token = await BHM.deployed();
+      //for test
+      return generateTestTokens(token);
     });
   } catch (e) {
     console.error(e);
