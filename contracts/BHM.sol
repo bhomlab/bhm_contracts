@@ -156,21 +156,21 @@ contract BHM is MiniMeToken {
   function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256){
   	
   	//check condition
-  	
+  	var _keyTimestamp = now;
   	//unique key owner x timestamp, default value of mapping is 0
   	require(leaseStructs[msg.sender][now].isUsed == false);
-  	leaseStructs[msg.sender][now].deposit = _deposit;
-  	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
-  	leaseStructs[msg.sender][now].isUsed = true;
-  	leaseStructs[msg.sender][now].lock = false;
-  	leaseStructs[msg.sender][now].agentFee = _agentFee;
+  	leaseStructs[msg.sender][_keyTimestamp].deposit = _deposit;
+  	leaseStructs[msg.sender][_keyTimestamp].leaseFee = _leaseFee;
+  	leaseStructs[msg.sender][_keyTimestamp].isUsed = true;
+  	leaseStructs[msg.sender][_keyTimestamp].lock = false;
+  	leaseStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
   	//TODO check length
   	for(uint i = 0; i < _paymentTimestamp.length; ++i){
-  		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
-  		leaseStructs[msg.sender][now].isPaid.push(false);
+  		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
+  		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
   	}
   	
-  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
+  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, _keyTimestamp, msg.sender);
   }
   
   //2. apply lease
@@ -187,7 +187,7 @@ contract BHM is MiniMeToken {
   	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
   	//보증금을 넣어주고
   	transferFrom(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
-  	//소유주에서 빌린 사람에게로 오는 deposit으로 잡자
+  	//소유주에서 빌린 사람에게로 오는 deposit으로 잡자, 빌린 사람의 잔액이 없어도 되는지 확인
   	setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
   	//set lock
   	leaseStructs[_to][_keyTimeStamp].lock = true;
@@ -223,7 +223,7 @@ contract BHM is MiniMeToken {
     	if( (leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
     		leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] = true;
     		//withdraw
-    		transferFrom(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
+    		withdrawDeposit(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
     	}
   	}
   	
@@ -236,15 +236,9 @@ contract BHM is MiniMeToken {
   	//require ownership
 	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
 	for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
-    	if((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == false)){
-    		leaseStructs[_target][_keyTimeStamp].isPaid[i] = true;
-    		//withdraw
-    		transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
-    	}
+    	require((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == true));
     }
-	
-	
-		
+	withdrawDeposit(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].deposit);	
   }
   
   
@@ -262,7 +256,6 @@ contract BHM is MiniMeToken {
 ////////////////    
   struct SaleStruct {
     uint256 deposit;
-  	uint256 leaseFee;
   	uint256 agentFee;
   	address rent;
   	address confirmedCA;
@@ -278,20 +271,34 @@ contract BHM is MiniMeToken {
   function createSale(uint256 _deposit, bool _useCA, uint256 _agentFee) public returns (uint256){
   	
   	//check condition
-  	
+  	var _keyTimestamp = now;
   	//unique key owner x timestamp, default value of mapping is 0
-  	require(saleStructs[msg.sender][now].isUsed == false);
-  	saleStructs[msg.sender][now].deposit = _deposit;
-  	saleStructs[msg.sender][now].isUsed = true;
-  	saleStructs[msg.sender][now].lock = false;
-  	saleStructs[msg.sender][now].agentFee = _agentFee;
+  	require(saleStructs[msg.sender][_keyTimestamp].isUsed == false);
+  	saleStructs[msg.sender][_keyTimestamp].deposit = _deposit;
+  	saleStructs[msg.sender][_keyTimestamp].isUsed = true;
+  	saleStructs[msg.sender][_keyTimestamp].lock = false;
+  	saleStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
 
 	  	
   	CreateSale(_deposit, _useCA,  now, msg.sender);
   }
   
+  function applySale(address _to, uint256 _keyTimeStamp) public {
+  	//check lock
+  	require(saleStructs[_to][_keyTimeStamp].lock == false);
+  	//set deposit for owner
+  	require(saleStructs[_to][_keyTimeStamp].deposit >= balanceOfAt(msg.sender, block.number));
+  	setDeposit(msg.sender, _to, saleStructs[_to][_keyTimeStamp].leaseFee * (saleStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
+  	//set lock
+  	saleStructs[_to][_keyTimeStamp].lock = true;
+  	saleStructs[_to][_keyTimeStamp].rent = msg.sender;
+  	//event
+  	ApplySale(_to, _keyTimeStamp, msg.sender);
+  }
+  
   
   event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
+  event ApplySale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   
 ////////////////
 // Functions for Deposit
