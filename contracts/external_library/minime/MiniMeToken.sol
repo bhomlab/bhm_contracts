@@ -666,7 +666,7 @@ contract MiniMeToken is Controlled {
 		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 		
         // An event to make the deposit easy to find on the blockchain
-        WithDeposit(_from, _to, _amount);        
+        WithdrawDeposit(_from, _to, _amount);        
 	}
     
 	
