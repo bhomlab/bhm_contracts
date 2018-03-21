@@ -207,7 +207,7 @@ contract BHM is MiniMeToken {
   	//need multi check?
     require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
     //check enough agentFee
-    require(leaseStructs[_target][_keyTimeStamp].leaseFee >= balanceOfAt(_target, block.number));
+    require(leaseStructs[_target][_keyTimeStamp].agentFee >= balanceOfAt(_target, block.number));
     //fee?
     transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
 	//confirm
@@ -257,12 +257,13 @@ contract BHM is MiniMeToken {
   struct SaleStruct {
     uint256 deposit;
   	uint256 agentFee;
-  	address rent;
+  	address buyer;
   	address confirmedCA;
   	address doubleConfirmedCA;
   	bool isUsed;
     bool lock;
     bool isConfirmed;
+    bool isDoubleConfirmed;
     bool isPaid;
   }
   
@@ -278,7 +279,6 @@ contract BHM is MiniMeToken {
   	saleStructs[msg.sender][_keyTimestamp].isUsed = true;
   	saleStructs[msg.sender][_keyTimestamp].lock = false;
   	saleStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
-
 	  	
   	CreateSale(_deposit, _useCA,  now, msg.sender);
   }
@@ -288,17 +288,32 @@ contract BHM is MiniMeToken {
   	require(saleStructs[_to][_keyTimeStamp].lock == false);
   	//set deposit for owner
   	require(saleStructs[_to][_keyTimeStamp].deposit >= balanceOfAt(msg.sender, block.number));
-  	setDeposit(msg.sender, _to, saleStructs[_to][_keyTimeStamp].leaseFee * (saleStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
+  	setDeposit(msg.sender, _to, saleStructs[_to][_keyTimeStamp].deposit);
   	//set lock
   	saleStructs[_to][_keyTimeStamp].lock = true;
-  	saleStructs[_to][_keyTimeStamp].rent = msg.sender;
+  	saleStructs[_to][_keyTimeStamp].buyer = msg.sender;
   	//event
   	ApplySale(_to, _keyTimeStamp, msg.sender);
+  }
+  
+  function confirmTradeByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+  	//check it is locked
+  	require(saleStructs[_target][_keyTimeStamp].lock == true);
+  	//need multi check?
+    require(saleStructs[_target][_keyTimeStamp].isConfirmed == false);
+    //check enough agentFee
+    require(saleStructs[_target][_keyTimeStamp].agentFee >= balanceOfAt(_target, block.number));
+    //fee?
+    transferFrom(_target, msg.sender, saleStructs[_target][_keyTimeStamp].agentFee);
+	//confirm
+    saleStructs[_target][_keyTimeStamp].isConfirmed = true;
+    confirmTradeByCA(_target, _keyTimeStamp);
   }
   
   
   event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   event ApplySale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
+  event confirmTradeByCA(address _target, uint256 _keyTimeStamp);
   
 ////////////////
 // Functions for Deposit
