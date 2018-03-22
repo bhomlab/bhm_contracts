@@ -6,13 +6,13 @@ contract BHM is MiniMeToken {
 
 ////////////////
 // Functions for Block
-////////////////  
-  
+////////////////
+
   mapping (address => bool) blocked;
 
   event Blocked(address _addr);
   event Unblocked(address _addr);
-  
+
   function blockAddress(address _addr) public onlyController {
     require(!blocked[_addr]);
     blocked[_addr] = true;
@@ -24,17 +24,17 @@ contract BHM is MiniMeToken {
     blocked[_addr] = false;
     Unblocked(_addr);
   }
-  
+
   modifier onlyNotBlocked(address _addr) {
     require(!blocked[_addr]);
     _;
   }
-  
-  
+
+
   struct AuctionStruct {
-  	address[] auctionAddr;  		
+  	address[] auctionAddr;
   }
-  
+
   mapping (address => AuctionStruct) AuctionStructs;
 
   function BHM(address _tokenFactory) MiniMeToken(
@@ -62,7 +62,7 @@ contract BHM is MiniMeToken {
   function destroyTokens(address _owner, uint _amount) public onlyController  returns (bool) {
     return super.destroyTokens(_owner, _amount);
   }
-  
+
   function enableTransfers(bool _transfersEnabled) public onlyController {
     super.enableTransfers(_transfersEnabled);
   }
@@ -79,7 +79,7 @@ contract BHM is MiniMeToken {
 
 ////////////////
 // Functions for User Level Policy
-////////////////  
+////////////////
 
   modifier onlyCertifiedAgent {
    require(certifiedAgent[msg.sender]);
@@ -87,12 +87,12 @@ contract BHM is MiniMeToken {
   }
 
   mapping (address => bool) public admin;
-  
+
   modifier onlyAdmin() {
     require(admin[msg.sender]);
     _;
   }
- 
+
   mapping (address => bool) public certifiedAgent;
 
   function setAdmin(address _addr, bool _value)
@@ -109,26 +109,26 @@ contract BHM is MiniMeToken {
 
     return true;
   }
-  
+
   function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
     require(_addr != address(0));
     require(admin[_addr] == !_value);
     certifiedAgent[_addr] = _value;
   }
-    
+
   event SetAdmin(address _addr);
-  
+
 //  function createAuction(uint _biddingTime, string _owner, string _estateAddress, string _registrationNumber) public {
 //    //TODO add new information
 //  	AuctionStructs[msg.sender].auctionAddr.push(new Auction(_biddingTime, msg.sender, _estateAddress, _registrationNumber));
-//  	
-//  	//event ¹Þ¾Æ¼­ Ã³¸®ÇØ¾ß ÇÑ´Ù
+//
+//  	//event ï¿½Þ¾Æ¼ï¿½ Ã³ï¿½ï¿½ï¿½Ø¾ï¿½ ï¿½Ñ´ï¿½
 //  }
-  
+
 ////////////////
 // Functions for Lease
-////////////////    
-//TODO °è¾à¸¸ ½º¸¶Æ® ÄÁÆ®·¢À¸·Î ÇÏµµ·Ï ¹Ù²Ü±î?
+////////////////
+//TODO ï¿½ï¿½ï¿½à¸¸ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ïµï¿½ï¿½ï¿½ ï¿½Ù²Ü±ï¿½?
 //TODO We have to save this in minime token
   struct LeaseStruct {
   	uint256[] paymentTimestamp;
@@ -144,17 +144,17 @@ contract BHM is MiniMeToken {
   }
   //KEY IS LEASETIMESTAMP == NOW
   mapping (address => mapping(uint256 => LeaseStruct)) leaseStructs;
-  
+
 
   //1. create lease
   //1.1 set condition
-  
+
   //use CA
   //real estate information
   //CA fee
   //check 128 or 256
   function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256){
-  	
+
   	//check condition
   	var _keyTimestamp = now;
   	//unique key owner x timestamp, default value of mapping is 0
@@ -169,12 +169,12 @@ contract BHM is MiniMeToken {
   		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
   		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
   	}
-  	
+
   	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, _keyTimestamp, msg.sender);
   }
-  
+
   //2. apply lease
- 
+
   //TODO
   function applyLease(address _to, uint256 _keyTimeStamp) public {
   	//check lock
@@ -183,11 +183,11 @@ contract BHM is MiniMeToken {
   	//check uint128
   	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
   	require(_amount >= balanceOfAt(msg.sender, block.number));
-  	//¿ù¼¼¸¦ depositÀ¸·Î Àâ°í
+  	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ depositï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
   	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
-  	//º¸Áõ±ÝÀ» ³Ö¾îÁÖ°í
+  	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½Ö°ï¿½
   	transferFrom(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
-  	//¼ÒÀ¯ÁÖ¿¡¼­ ºô¸° »ç¶÷¿¡°Ô·Î ¿À´Â depositÀ¸·Î ÀâÀÚ, ºô¸° »ç¶÷ÀÇ ÀÜ¾×ÀÌ ¾ø¾îµµ µÇ´ÂÁö È®ÀÎ
+  	//ï¿½ï¿½ï¿½ï¿½ï¿½Ö¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ depositï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ü¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½îµµ ï¿½Ç´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
   	setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
   	//set lock
   	leaseStructs[_to][_keyTimeStamp].lock = true;
@@ -195,7 +195,7 @@ contract BHM is MiniMeToken {
   	//event
   	ApplyLease(_to, _keyTimeStamp, msg.sender);
   }
-  
+
   //3. confirm contract by CA
   //check condition
   //CA confirmed
@@ -215,7 +215,7 @@ contract BHM is MiniMeToken {
     ConfirmLeaseByCA(_target, _keyTimeStamp);
   }
 
-  
+
   //4. withdraw when time over
   function withdrawLeaseFee(uint256 _keyTimeStamp) public {
 	//is there a faster way?
@@ -226,34 +226,34 @@ contract BHM is MiniMeToken {
     		withdrawDeposit(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
     	}
   	}
-  	
+
   }
-  
-  
+
+
   //5. withdraw pre-deposit
-  //¼ÒÀ¯ÁÖ -> ºô¸° »ç¶÷
+  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -> ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
   function withdrawPreDeposit(address _target, uint256 _keyTimeStamp) public {
   	//require ownership
 	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
 	for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i){
     	require((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == true));
     }
-	withdrawDeposit(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].deposit);	
+	withdrawDeposit(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].deposit);
   }
-  
-  
-  
+
+
+
   //6. cancel lease before confirm
-  
-  
-  
+
+
+
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
   event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp);
-  
+
 ////////////////
 // Functions for Sale
-////////////////    
+////////////////
   struct SaleStruct {
     uint256 deposit;
   	uint256 agentFee;
@@ -266,11 +266,11 @@ contract BHM is MiniMeToken {
     bool isDoubleConfirmed;
     bool isPaid;
   }
-  
+
   mapping (address => mapping(uint256 => SaleStruct)) saleStructs;
 
   function createSale(uint256 _deposit, bool _useCA, uint256 _agentFee) public returns (uint256){
-  	
+
   	//check condition
   	var _keyTimestamp = now;
   	//unique key owner x timestamp, default value of mapping is 0
@@ -279,10 +279,10 @@ contract BHM is MiniMeToken {
   	saleStructs[msg.sender][_keyTimestamp].isUsed = true;
   	saleStructs[msg.sender][_keyTimestamp].lock = false;
   	saleStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
-	  	
+
   	CreateSale(_deposit, _useCA,  now, msg.sender);
   }
-  
+
   function applySale(address _to, uint256 _keyTimeStamp) public {
   	//check lock
   	require(saleStructs[_to][_keyTimeStamp].lock == false);
@@ -295,7 +295,7 @@ contract BHM is MiniMeToken {
   	//event
   	ApplySale(_to, _keyTimeStamp, msg.sender);
   }
-  
+
   function confirmTradeByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
   	//check it is locked
   	require(saleStructs[_target][_keyTimeStamp].lock == true);
@@ -309,16 +309,16 @@ contract BHM is MiniMeToken {
     saleStructs[_target][_keyTimeStamp].isConfirmed = true;
     confirmTradeByCA(_target, _keyTimeStamp);
   }
-  
-  
+
+
   event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   event ApplySale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   event confirmTradeByCA(address _target, uint256 _keyTimeStamp);
-  
+
 ////////////////
 // Functions for Deposit
-////////////////  
+////////////////
 
-  
-  
+
+
 }
