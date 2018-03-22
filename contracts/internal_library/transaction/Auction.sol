@@ -78,7 +78,7 @@ contract Auction is MiniMeToken{
       EscroAuction(_target, _keyTimeStamp);
     }
 
-    /* //4. withDraw Aunction
+    //4. withDraw Aunction
     function withDrawAuction(address _target, uint256 _keyTimeStamp) public {
         require(msg.sender == auctionStructs[_target][_keyTimeStamp].highestBidder);
         /* uint256 amount = auctionStructs[msg.sender][_keyTimeStamp].highestBidder;
@@ -88,7 +88,7 @@ contract Auction is MiniMeToken{
               return false;
         } */
         withdrawAuction(_target, msg.sender, AuctionStructs[_target][_keyTimeStamp].highestBidder);
-    } */
+    }
 
     /* //5. end Auction
     function endAuction() public {
