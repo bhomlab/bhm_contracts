@@ -23,21 +23,23 @@ contract Auction is MiniMeToken{
     mapping (uint256 => bool) public auctionEnd;
 
     //1. create Auction , msg.sender 계약의 소유자 = beneficiary
-    function createAuction(uint256 _lowestprice, bool _useEscro) public returns (uint256){
+    function createAuction(uint256 _lowestprice, uint256 _auctionEndTime) public returns (uint256){
     	//check condition
     	var _keyTimestamp = now;
     	//unique key owner x timestamp, default value of mapping is 0
     	require(auctionStructs[msg.sender][_keyTimestamp].isUsed == false);
+      require(auctionStructs[msg.sender][_keyTimestamp].auctionEndTime > now);
       auctionStructs[msg.sender][_keyTimestamp].auctionStartTime = now;
     	auctionStructs[msg.sender][_keyTimestamp].lowestprice = _lowestprice;
+      auctionStructs[msg.sender][_keyTimestamp].auctionEndTime  = _auctionEndTime;
     	auctionStructs[msg.sender][_keyTimestamp].isUsed = true;
     	auctionStructs[msg.sender][_keyTimestamp].lock = false;
       auctionStructs[msg.sender][_keyTimestamp].auctionEnded = false;
       //경매 생성
-    	CreateAuction(_lowestprice, _useEscro,  now, msg.sender);
+    	CreateAuction(_lowestprice, _auctionEndTime, now, msg.sender);
     }
 
-    //2. bid Auction 
+    //2. bid Auction
     function bidAuction(address _bidder, uint256 _keyTimeStamp, uint256 _bid, uint256 _biddingTime) public {
       //check lock
       require(auctionStructs[msg.sender][_keyTimeStamp].lock == false);
@@ -82,7 +84,7 @@ contract Auction is MiniMeToken{
 
     //4. Events
     //경매생성 금액, 에스크로, 시간, 판매자
-    event CreateAuction(uint256 _lowestprice, bool _useEscro, uint256 _now, address _beneficiary);
+    event CreateAuction(uint256 _lowestprice, uint256 _auctionEndTime, uint256 _now, address _beneficiary);
     // 전달할곳, 타임스탬프, 보내는주소, 판매금, 비드시간대
     event BidAuction(address _bidder, uint256 _keyTimeStamp, address _senderAddress, uint256 _lowestprice, uint256 _biddingTime);
 }
