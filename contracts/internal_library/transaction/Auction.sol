@@ -4,25 +4,18 @@ import '/test/tomkim/contracts/external_library/minime/MiniMeToken.sol';
 contract Auction is MiniMeToken{
 
     struct AuctionStruct {
-      uint256 lowestprice; //판매대금 --> 최저가
+      uint256 lowestprice; //경매최저가
       uint256 highestBid; //최고입찰금액
-      uint256 Bid; //비드가
+      uint256 Bid; //비드금액
       uint256 biddingTime; //경매입찰시간
       uint256 auctionStartTime; //경매시작시간
       uint256 auctionEndTime; //경매 종료
       address beneficiary; //경매자
-      address highestBidder; //최고입찰자
-      address Bidder; //비드한사람
+      address highestBidder; //입찰자
+      address Bidder; //비더
     	bool isUsed; //사용
       bool lock;
       bool auctionEnded;
-    }
-
-    //modifier는 bool 값이어야만 하는지?
-    //Escro 확인
-    modifier onlyEscroAuction {
-     require(escroAuction[msg.sender]);
-      _;
     }
 
     mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;
@@ -92,6 +85,4 @@ contract Auction is MiniMeToken{
     event CreateAuction(uint256 _lowestprice, bool _useEscro, uint256 _now, address _beneficiary);
     // 전달할곳, 타임스탬프, 보내는주소, 판매금, 비드시간대
     event BidAuction(address _bidder, uint256 _keyTimeStamp, address _senderAddress, uint256 _lowestprice, uint256 _biddingTime);
-    // 에스크로 확인 완료
-    event EscroAuction(address _target, uint256 _keyTimeStamp);
 }
