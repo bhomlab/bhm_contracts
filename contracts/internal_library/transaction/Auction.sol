@@ -9,7 +9,7 @@ contract Auction is MiniMeToken{
       uint256 biddingTime; //경매입찰시간
       uint256 auctionStartTime; //경매시작시간
       uint256 auctionEndTime; //경매 종료
-      address beneficiary; //경매자
+      //address target; //경매자
       address highestBidder; //최고입찰자
       address saler;
     	address confirmedCA; //에스크로 혹은 중개
@@ -30,7 +30,7 @@ contract Auction is MiniMeToken{
     mapping (address => bool) public escroAuction;
 
     //1. create Auction
-    function createAuction(uint256 _deposit, bool _useCA, address _beneficiary) public returns (uint256){
+    function createAuction(uint256 _deposit, bool _useCA) public returns (uint256){
     	//check condition
     	var _keyTimestamp = now;
     	//unique key owner x timestamp, default value of mapping is 0
@@ -44,7 +44,7 @@ contract Auction is MiniMeToken{
     }
 
     //2. bid Auction
-    function bidAuction(address _to, uint256 _keyTimeStamp, uint _highestBid, uint256 _biddingTime) public {
+    function bidAuction(address _to, uint256 _keyTimeStamp, uint _highestBid, uint256 _biddingTime) public payable {
       //check lock
       require(auctionStructs[_to][_keyTimeStamp].lock == false);
       //set amount for owner
@@ -79,21 +79,23 @@ contract Auction is MiniMeToken{
       EscroAuction(_target, _keyTimeStamp);
     }
 
-    //4. withDraw Aunction
+    //4. withDraw Aunction (End Auction)
     function withDrawAuction(address _target, uint256 _keyTimeStamp) public {
         // 유효성 검사 (경매기간만료 됐는지)
         require(now >= auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime);
-        require(!auctionEnded);
+        require(!auctionStructs[msg.sender][_keyTimeStamp].auctionEnded);
         // 경매기간 완료 확인
-        auctionEnded = true;
+        auctionStructs[msg.sender][_keyTimeStamp].auctionEnded = true;
         // 금액 전달
         require(msg.sender == auctionStructs[_target][_keyTimeStamp].highestBidder);
-        withdrawAuction(_target, msg.sender, auctionStructs[msg.sender][_keyTimeStamp].highestBidder);
+        withdrawAuction(_target, msg.sender, auctionStructs[msg.sender][_keyTimeStamp].highestBid);
+        EndAuction(_target, _keyTimeStamp, auctionStructs[msg.sender][_keyTimeStamp].highestBid);
     }
 
     //5. Events
-    event CreateAuction(uint256 _deposit, bool _useCA, uint256 _now, address _beneficiary);
+    event CreateAuction(uint256 _deposit, bool _useCA, uint256 _now, address _target);
     event BidAuction(address _to, uint256 _keyTimeStamp, address _senderAddress, uint256 _deposit, uint256 _biddingTime);
     event EscroAuction(address _target, uint256 _keyTimeStamp);
     event withdrawAuction(address _target, address _to, uint256 _deposit);
+    event EndAuction(address _target, uint256 _keyTimeStamp, uint256 _highestBid);
 }
