@@ -11,12 +11,10 @@ contract Auction is MiniMeToken{
       uint256 auctionStartTime; //경매시작시간
       uint256 auctionEndTime; //경매 종료
       address beneficiary; //경매자
-      //address escro; //에스크로
       address highestBidder; //최고입찰자
       address Bidder; //비드한사람
     	bool isUsed; //사용
       bool lock;
-      bool isConfirmed;
       bool auctionEnded;
     }
 
