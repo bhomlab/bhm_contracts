@@ -37,7 +37,7 @@ contract Auction is MiniMeToken{
     	CreateAuction(_lowestprice, _useEscro,  now, msg.sender);
     }
 
-    //2. bid Auction payable 이더리움이 불렸을때..  _highestBid => _bid
+    //2. bid Auction 
     function bidAuction(address _bidder, uint256 _keyTimeStamp, uint256 _bid, uint256 _biddingTime) public {
       //check lock
       require(auctionStructs[msg.sender][_keyTimeStamp].lock == false);
