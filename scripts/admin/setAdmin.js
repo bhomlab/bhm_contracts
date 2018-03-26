@@ -43,7 +43,7 @@ function setAdmin(_seedOwner, _bhmAddress, _addr, _value) {
     to: _bhmAddress,
     data: makeDataField(_addr, _value),
     gas: 1000000,
-    gasPrice: 30e9,
+    gasPrice: 25e9,
   });
 }
 
