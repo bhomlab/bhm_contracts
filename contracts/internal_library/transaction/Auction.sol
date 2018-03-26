@@ -20,9 +20,9 @@ contract Auction is MiniMeToken{
       bool isConfirmed;
     }
 
-    function transferFrom(address _from, address _to, uint256 _amount) public onlyNotBlocked(_from) returns (bool success) {
+    /* function transferFrom(address _from, address _to, uint256 _amount) public onlyNotBlocked(_from) returns (bool success) {
       return super.transferFrom(_from, _to, _amount);
-    }
+    } */
 
 
     mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;
@@ -37,7 +37,7 @@ contract Auction is MiniMeToken{
       auctionStructs[msg.sender][_keyTimestamp].auctionStartTime = now;
       auctionStructs[msg.sender][_keyTimestamp].beneficiary = _beneficiary;
     	auctionStructs[msg.sender][_keyTimestamp].lowestprice = _lowestprice;
-      auctionStructe[msg.sender][_keyTimeStamp].agentFee = agentFee;
+      auctionStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
       auctionStructs[msg.sender][_keyTimestamp].auctionEndTime  = _auctionEndTime;
     	auctionStructs[msg.sender][_keyTimestamp].isUsed = true;
     	auctionStructs[msg.sender][_keyTimestamp].lock = false;
@@ -60,24 +60,26 @@ contract Auction is MiniMeToken{
       //경매 비딩 금액, 시간
       auctionStructs[msg.sender][_keyTimeStamp].lock = true;
       auctionStructs[msg.sender][_keyTimeStamp].biddingTime = _biddingTime;
-      auctionStructs[msg.sender][_keyTimeStamp].bid = _bid;
-      auctionStructs[msg.sender][_keyTimeStamp].highestBid = auctionStructs[msg.sender][_keyTimeStamp].bid;
 
       //기존 최고 입찰가격이 비드 가격보다 낮을 경우 최고입찰자, 입찰가가 바뀜
       if(auctionStructs[msg.sender][_keyTimeStamp].highestBid < _bid) {
         auctionStructs[msg.sender][_keyTimeStamp].highestBidder = _bidder;
         auctionStructs[msg.sender][_keyTimeStamp].highestBid = _bid;
-        //입찰 알림 이벤트
-        BidAuction(msg.sender, _keyTimeStamp, auctionStructs[msg.sender][_keyTimeStamp].beneficiary,
-          auctionStructs[msg.sender][_keyTimeStamp].highestBid, _biddingTime);
-      }
+      }/*  else {
+        auctionStructs[msg.sender][_keyTimeStamp].bid = _bid;
+        auctionStructs[msg.sender][_keyTimeStamp].highestBid = auctionStructs[msg.sender][_keyTimeStamp].bid;
+      } */
+      //입찰 알림 이벤트
+      BidAuction(msg.sender, _keyTimeStamp, auctionStructs[msg.sender][_keyTimeStamp].beneficiary,
+        auctionStructs[msg.sender][_keyTimeStamp].highestBid, _biddingTime);
+
       //경매자에게 최고입찰가 전달 준비
       setDeposit(auctionStructs[msg.sender][_keyTimeStamp].beneficiary, auctionStructs[msg.sender][_keyTimeStamp].highestBidder,
         auctionStructs[msg.sender][_keyTimeStamp].highestBid);
     }
 
     //3. Escro Auction
-    function escroAuction(address _target, uint256 _keyTimeStamp) public onlyEscroAuction{
+    /* function escroAuction(address _target, uint256 _keyTimeStamp) public onlyEscroAuction{
       //check it is locked
       require(auctionStructs[_target][_keyTimeStamp].lock == true);
       //need multi check?
@@ -104,11 +106,11 @@ contract Auction is MiniMeToken{
 
         // 판매자에가 입찰금액 전달
         withdrawDeposit(_bidder, msg.sender, auctionStructs[_bidder][_keyTimeStamp].highestBid);
-    }
+    } */
 
     //5. Events
     //경매생성 금액, 경매종료시간, 생성시간, 판매자
-    event CreateAuction(address _beneficiary, uint256 _lowestprice, uint256 _auctionEndTime, uint256 _now);
+    event CreateAuction(address _beneficiary, uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime, uint256 _now);
     // 전달할곳, 타임스탬프, 보내는주소, 판매금, 비드시간대
     event BidAuction(address _bidder, uint256 _keyTimeStamp, address _beneficiary, uint256 _lowestprice, uint256 _biddingTime);
     // escro
