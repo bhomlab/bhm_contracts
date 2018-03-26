@@ -11,7 +11,7 @@ const mnemonic = process.env.MNEMONIC || "";//TODO
 const provider = new HDWalletProvider(mnemonic, providerUrl, 0, 50);
 web3.setProvider(provider);
 
-
+ 
 const seedOwner = provider.addresses[ 0 ];
 
 const encodedKycSignature = web3.eth.abi.encodeFunctionSignature({
