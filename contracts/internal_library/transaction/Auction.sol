@@ -42,9 +42,8 @@ contract Auction is MiniMeToken{
 
     //1. create Auction , msg.sender 계약의 소유자 = beneficiary
     function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256){
-    	//check condition
-    	var _keyTimestamp = now;
-    	//unique key owner x timestamp, default value of mapping is 0
+    	// check condition
+    	var _keyTimeStamp = now;
     	require(auctionStructs[msg.sender][_keyTimestamp].isUsed == false);
       //경매마감시간이 지금보다 더늦게설정해야함
       require(auctionStructs[msg.sender][_keyTimestamp].auctionEndTime > now);
@@ -108,16 +107,16 @@ contract Auction is MiniMeToken{
 
     //4. withDraw Aunction (End Auction)
     function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public{
-        // 유효성 검사 (경매기간 만료 됐는지)
-        require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
-        require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
-        // 경매기간 만료 확인
-        auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
-        // 판매자에게 금액 전달 입찰완료
-        withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
-        // 경매 종료
-        AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid
-          , _keyTimeStamp);
+      // 유효성 검사 (경매기간 만료 됐는지)
+      require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
+      require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
+      // 경매기간 만료 확인
+      auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
+      // 판매자에게 금액 전달 입찰완료
+      withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+      // 경매 종료
+      AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid
+        , _keyTimeStamp);
     }
 
     //5. Events
