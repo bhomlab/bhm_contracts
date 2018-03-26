@@ -10,13 +10,11 @@ contract Auction is MiniMeToken{
       require(!blocked[_addr]);
       _;
     }
-
-    //Escro add
-    modifier onlyEscroAuction {
-     require(certifiedEscro[msg.sender]);
+    modifier onlyCertifiedAgent {
+     require(certifiedAgent[msg.sender]);
       _;
     }
-    mapping (address => bool) public certifiedEscro;
+    mapping (address => bool) public certifiedAgent;
 
     struct AuctionStruct {
       uint256 lowestprice; //경매최저가
@@ -29,7 +27,7 @@ contract Auction is MiniMeToken{
       address beneficiary; //경매자
       address highestBidder; //입찰자
       address bidder; //비더
-    	bool isUsed; //사용
+      bool isUsed; //사용
       bool lock;
       bool auctionEnded; //경매플래그
       bool isConfirmed;
@@ -61,7 +59,7 @@ contract Auction is MiniMeToken{
     	CreateAuction(msg.sender, _lowestprice, _agentFee, _auctionEndTime);
     }
 
-    //2. bid Auction
+    //2. bid Auction 잔고랑 bid 비교
     function bidAuction(address _beneficiary, uint256 _keyTimeStamp, uint256 _bid, uint256 _biddingTime) public {
       //check lock
       require(auctionStructs[_beneficiary][_keyTimeStamp].lock == false);
@@ -69,47 +67,37 @@ contract Auction is MiniMeToken{
       require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= now);
       //비드타임이 경매 만기 전인지 확인
       require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= auctionStructs[msg.sender][_keyTimeStamp].biddingTime);
-      //최저가보다 높게 지불가능한지 확인 (??)
-      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice >= balanceOfAt(msg.sender, block.number));
+      //비더가 최저가보다 높게 지불가능한지 확인
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice <= balanceOfAt(msg.sender, block.number));
+      //잔고가 비더금액보다 많은지
+      require(_bid <= balanceOfAt(msg.sender, block.number));
       //최저가 보다 수신금액이 낮으면 X
-      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice > _bid);
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice < _bid);
       //진행되는 최고경매가 보다 낮으면 X
-      require(auctionStructs[_beneficiary][_keyTimeStamp].highestBid > _bid);
-      /* //입찰된 사람이 있는지 유무 확인 ?
-      require(auctionStructs[msg.sender][_keyTimeStamp].highestBidder == 0); */
-      //경매자에게 비드가격 set ? 여기수정해야함 아마..(이해 X)
-      setDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].bid);
-      transferFrom(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].bid);
-      setDeposit(_beneficiary, msg.sender, auctionStructs[_beneficiary][_keyTimeStamp].bid);
-
+      require(auctionStructs[_beneficiary][_keyTimeStamp].highestBid < _bid);
+      //경매자에게 비드가 set
+      setDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
       //경매 비딩 금액, 시간
-      auctionStructs[msg.sender][_keyTimeStamp].biddingTime = _biddingTime;
-      auctionStructs[msg.sender][_keyTimeStamp].beneficiary = _beneficiary;
-
-      //비드 셋
+      auctionStructs[_beneficiary][_keyTimeStamp].biddingTime = _biddingTime;
       auctionStructs[_beneficiary][_keyTimeStamp].lock = true;
       auctionStructs[_beneficiary][_keyTimeStamp].bidder = msg.sender;
       auctionStructs[_beneficiary][_keyTimeStamp].bid = _bid;
+      auctionStructs[_beneficiary][_keyTimeStamp].highestBidder = auctionStructs[_beneficiary][_keyTimeStamp].bidder;
+      auctionStructs[_beneficiary][_keyTimeStamp].highestBid = auctionStructs[_beneficiary][_keyTimeStamp].bid;
 
-      //기존 최고 입찰가격이 비드 가격보다 낮을 경우 최고입찰자, 입찰가가 바뀜
-      //최고입찰자가 없으면 바로 최고입찰자가 됨
-      if((auctionStructs[_beneficiary][_keyTimeStamp].highestBid < _bid) || (auctionStructs[_beneficiary][_keyTimeStamp].highestBidder == 0)) {
-        auctionStructs[_beneficiary][_keyTimeStamp].highestBidder = auctionStructs[_beneficiary][_keyTimeStamp].bidder;
-        auctionStructs[_beneficiary][_keyTimeStamp].highestBid = auctionStructs[_beneficiary][_keyTimeStamp].bid;
-      }
       //현재 최고입찰가 전달
       BidAuction(_beneficiary, _keyTimeStamp, auctionStructs[_beneficiary][_keyTimeStamp].highestBidder,
         auctionStructs[_beneficiary][_keyTimeStamp].highestBid, _biddingTime);
     }
 
-    //3. Escro Auction
-    function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyEscroAuction{
+    //3. Escro Auction add certifiedAgent
+    function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent{
       //check it is locked
       require(auctionStructs[_beneficiary][_keyTimeStamp].lock == true);
       //need multi check?
       require(auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed == false);
-      //수수료 지불가능한지 확인
-      require(auctionStructs[_beneficiary][_keyTimeStamp].agentFee >= balanceOfAt(_beneficiary, block.number));
+      //경매자가 수수료 지불가능한지 확인
+      require(auctionStructs[_beneficiary][_keyTimeStamp].agentFee <= balanceOfAt(_beneficiary, block.number));
       //에스크로 수수료 전달
       transferFrom(_beneficiary, msg.sender, auctionStructs[_beneficiary][_keyTimeStamp].agentFee);
       //확인
@@ -125,11 +113,11 @@ contract Auction is MiniMeToken{
         require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
         // 경매기간 만료 확인
         auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
+        // 판매자에게 금액 전달 입찰완료
+        withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
         // 경매 종료
         AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid
           , _keyTimeStamp);
-        // 판매자에게 금액 전달 입찰완료
-        withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
     }
 
     //5. Events
