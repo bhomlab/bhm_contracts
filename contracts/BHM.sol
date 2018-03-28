@@ -230,11 +230,9 @@ contract BHM is MiniMeToken {
   	uint256 agentFee;
   	address buyer;
   	address confirmedCA;
-  	address doubleConfirmedCA;
   	bool isUsed;
     bool lock;
     bool isConfirmed;
-    bool isDoubleConfirmed;
     bool isPaid;
   }
 
@@ -305,10 +303,11 @@ contract BHM is MiniMeToken {
     bool isConfirmed;
   }
 
+  //Mapping auctionStruts
   mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;
 
   //1. create Auction , msg.sender = beneficiary
-  function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256){
+  function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256) {
     var _keyTimeStamp = now;
     require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
     require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
@@ -345,7 +344,7 @@ contract BHM is MiniMeToken {
   }
 
   //3. Escro Auction add certifiedAgent
-  function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent{
+  function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent {
     require(auctionStructs[_beneficiary][_keyTimeStamp].lock == true);
     require(auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed == false);
     require(auctionStructs[_beneficiary][_keyTimeStamp].agentFee <= balanceOfAt(_beneficiary, block.number));
@@ -356,7 +355,7 @@ contract BHM is MiniMeToken {
   }
 
   //4. withDraw Aunction (End Auction)
-  function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public{
+  function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public {
     require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
     require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
     auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
