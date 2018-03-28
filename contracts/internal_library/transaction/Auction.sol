@@ -44,16 +44,16 @@ contract Auction is MiniMeToken{
     function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256){
     	// check condition
     	var _keyTimeStamp = now;
-    	require(auctionStructs[msg.sender][_keyTimestamp].isUsed == false);
+    	require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
       //경매마감시간이 지금보다 더늦게설정해야함
-      require(auctionStructs[msg.sender][_keyTimestamp].auctionEndTime > now);
-      auctionStructs[msg.sender][_keyTimestamp].auctionStartTime = now;
-    	auctionStructs[msg.sender][_keyTimestamp].lowestprice = _lowestprice;
-      auctionStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
-      auctionStructs[msg.sender][_keyTimestamp].auctionEndTime  = _auctionEndTime;
-    	auctionStructs[msg.sender][_keyTimestamp].isUsed = true;
-    	auctionStructs[msg.sender][_keyTimestamp].lock = false;
-      auctionStructs[msg.sender][_keyTimestamp].auctionEnded = false;
+      require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
+      auctionStructs[msg.sender][_keyTimeStamp].auctionStartTime = now;
+    	auctionStructs[msg.sender][_keyTimeStamp].lowestprice = _lowestprice;
+      auctionStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
+      auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime  = _auctionEndTime;
+    	auctionStructs[msg.sender][_keyTimeStamp].isUsed = true;
+    	auctionStructs[msg.sender][_keyTimeStamp].lock = false;
+      auctionStructs[msg.sender][_keyTimeStamp].auctionEnded = false;
       //경매 생성
     	CreateAuction(msg.sender, _lowestprice, _agentFee, _auctionEndTime);
     }
