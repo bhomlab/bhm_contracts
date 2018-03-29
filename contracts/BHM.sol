@@ -366,7 +366,7 @@ contract BHM is MiniMeToken, User {
     saleStructs[_target][_keyTimeStamp].isConfirmed = true;
     ConfirmTradeByCA(_target, _keyTimeStamp);
   }
-
+ 
   event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   event ApplySale(address _to, uint256 _keyTimeStamp, uint256 _now, address _senderAddress);
   event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
