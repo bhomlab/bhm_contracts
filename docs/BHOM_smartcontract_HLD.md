@@ -9,7 +9,7 @@
 5) BHOM.FR.SMARTCONTRACT.MIGRATION
 6) BHOM.FR.SMARTCONTRACT.REGISTERWALLET
 
-### 0. ABSTRACT 
+### 0. ABSTRACT
 
 ### 1. BHOM.FR.SMARTCONTRACT.COMMON
 
@@ -17,8 +17,8 @@ This is common function for BHOM smart contract.
 
 #### 1.1. Requirement
 
-1) Smart contract must have a deposit. 
-2) Smart contract must have a user level policy. 
+1) Smart contract must have a deposit.
+2) Smart contract must have a user level policy.
 3) Smart contract must have a cancel/refund function.
 4) Smart contract must offer optional confirmation of certified agent.
 5) Smart contract offer registration function.
@@ -65,13 +65,13 @@ Deposit is one of the most important part of this smart contract. Only authorize
   }
 ```
 
-3) 
+3)
 
 1.2.2 User Level Policy
 
 As level of user, only user who has authority can do specific action.
 
-1) Add Admin By Controller 
+1) Add Admin By Controller
 
 ```bash
   modifier onlyController {
@@ -92,7 +92,7 @@ As level of user, only user who has authority can do specific action.
 
 ```bash
   mapping (address => bool) public certifiedAgent;
-  
+
   modifier onlyAdmin() {
     require(admin[msg.sender]);
     _;
@@ -121,7 +121,7 @@ As level of user, only user who has authority can do specific action.
 
 1.2.3 Cancel Function with Refund
 
-Cancellation can be done before transaction finished. If transaction cancelled, owner of deposit can withdraw from vault. 
+Cancellation can be done before transaction finished. If transaction cancelled, owner of deposit can withdraw from vault.
 
 
 1.2.4 Common Information of Real Estate
@@ -131,11 +131,11 @@ Common information of real estate have to be saved in smart contract. But which 
 1) Owner
 2) Registration number
 3) Price
-4) Type of transaction 
+4) Type of transaction
 
 1.2.5 Registration
 
-Unless traditional registration system is replaced by blockchain, 
+Unless traditional registration system is replaced by blockchain,
 
 1.2.6 Effective Gas Usage
 
@@ -179,7 +179,7 @@ See 1.2.1
 
 2.2.2 Creation
 
-Transaction created by owner. Owner is 'Who want to sell real estate'. 
+Transaction created by owner. Owner is 'Who want to sell real estate'.
 
 ```bash
   function Auction(uint _biddingTime, address _beneficiary ) public {
@@ -195,8 +195,8 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 
 ```bash    
   function auctionEnd() public {     
-     require(now >= auctionEnd); 
-     require(!ended); 
+     require(now >= auctionEnd);
+     require(!ended);
      ended = true;
      AuctionEnded(highestBidder, highestBid);
      beneficiary.transfer(highestBid);
@@ -211,10 +211,32 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 
 1) Invalid initial value
 2) Smaller amount of deposit than price
-3) 
+3)
 
 #### 2.4. Block Test Case
-
+1. Set invalid inital value
+2. Check auction already registered
+3. Check if Auction end time is registered more than making auction time  
+4. Current time exactly must be over auction end time
+5. Check if BHM amount of beneficiary more than auction lowest price
+6. Check making auction
+7. Check period of auction is available bid
+8. Check auction end time is later than the current time (auction creating time)  
+9. Anyone can participate in the auction (Block Address X)
+10. Check if bidding time isn't over the auction end time
+11. Check if token amount of bidder more than auction lowest price
+12. If bidder is over pay more than existing highest bidder, Bidder becomes highest bidder
+13. If bidder is over pay more than existing highest bidder, bid is highest bid
+14. Invalid bid event
+15. Check if BHM amount of beneficiary more than agent fee
+16. Check agent fee is transfered
+17. Check event escro
+18. Check if Auction end time is over current time
+19. Check exact highest bidder
+20. Check exact highest bid
+21. Transfer highest bid
+22. After transfer highest bid, auction must be end
+23. Auction end
 
 
 
@@ -253,9 +275,9 @@ Transaction created by owner. Lease can be done simple contract. It does not nee
   mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
 
   function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
-  	
+
   	//check condition
-  	
+
   	//unique key owner x timestamp, default value of mapping is 0
   	require(leaseStructs[msg.sender][now].isUsed == false);
   	leaseStructs[msg.sender][now].deposit = _deposit;
@@ -266,10 +288,10 @@ Transaction created by owner. Lease can be done simple contract. It does not nee
   	for(uint i = 0; i < _paymentTimestamp.length; ++i){
   		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
   	}
-  	
+
   	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
   }
-  
+
 ```
 
 3.2.3 Payment
@@ -280,9 +302,9 @@ Every period, owner get right for each payment.
   uint8[] periodTimeStamp;
   uint8 lastTimeStamp;
   uint256 paymentAmount;
-  
+
   mapping (address => Period) public periods;
-  
+
   function addPayment(uint8 _paymentTimeStamp, uint256 _amount) public onlyOwner {
     periodTimeStamp.push(_paymentTimeStamp);
     paymentAmount = _amount;
@@ -317,7 +339,7 @@ See 1.2.1
 
 4.2.2 Creation
 
-Transaction created by owner. 
+Transaction created by owner.
 
 4.2.3 Double Confirm
 
@@ -352,8 +374,8 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
         mapping (address => uint128) claimerValue;
     }    
     struct CheckpointForContract {
-    
-    
+
+
 	}    
 ```
 
@@ -385,8 +407,8 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
         mapping (address => uint128) claimerValue;
     }    
     struct CheckpointForContract {
-    
-    
+
+
 	}    
 ```
 
@@ -410,7 +432,7 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
 
 #### 6.2. function description
 
-6.2.1 
+6.2.1
 
 For matching User ID and Ethereum address, we need a function for identification. Like register email.
 
@@ -434,11 +456,3 @@ For matching User ID and Ethereum address, we need a function for identification
 #### 6.4. Block Test Case
 
 1) Set invalid initial value
-
-
- 
-
-
-
-
- 
