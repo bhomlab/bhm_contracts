@@ -33,23 +33,23 @@ Deposit is one of the most important part of this smart contract. Only authorize
 1) Safe withdraw by owner
 
 ```bash
-  function withdrawDeposit (address _from, address _to, uint _amount) internal {
+	function withdrawDeposit (address _from, address _to, uint _amount) internal {
 		if (_amount == 0) {
-             WithdrawDeposit(_from, _to, _amount);   
+             WithdrawDeposit(_from, _to, _amount);
              return;
-        }        
+        }
+
         var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
         var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
-        var previousBalanceTo = balanceOfAt(_to, block.number); 
-        var previousBalanceFrom = balanceOfAt(_from, block.number);                
+        var previousBalanceTo = balanceOfAt(_to, block.number);
+        var previousBalanceFrom = balanceOfAt(_from, block.number);
+
         require(previousDepositValueFrom >= _amount);
-        require(previousClaimerValue >= _amount);        
-        //update deposit value
+        require(previousClaimerValue >= _amount);
+
         updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
-		//update from balance 
-		updateValueAtNow(balances[_to], previousBalanceTo + _amount);		
-        // An event to make the deposit easy to find on the blockchain
-        SetDeposit(_from, _to, _amount);        
+		  updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        WithdrawDeposit(_from, _to, _amount);
 	}
 ```
 
