@@ -214,15 +214,15 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 3)
 
 #### 2.4. Block Test Case
-1. Set invalid inital value
+1. Set invalid initial value
 2. Check auction already registered
 3. Check if Auction end time is registered more than making auction time  
 4. Current time exactly must be over auction end time
-5. Check if BHM amount of beneficiary more than auction lowest price
+5. Check if BHM amount of beneficiary is more than auction lowest price
 6. Check making auction
 7. Check period of auction is available bid
 8. Check auction end time is later than the current time (auction creating time)  
-9. Anyone can participate in the auction (Block Address X)
+9. Anyone can participate in the auction (Blocked Address X)
 10. Check if bidding time isn't over the auction end time
 11. Check if token amount of bidder more than auction lowest price
 12. If bidder is over pay more than existing highest bidder, Bidder becomes highest bidder
@@ -350,6 +350,20 @@ Transaction created by owner.
 1) Invalid initial value
 
 #### 4.4. Block Test Case
+1. Set invalid initial value
+2. Check sale already registered
+3. Anyone can make sale (Blocked Address X)
+4. Check create sale
+5. Anyone can apply sale (Blocked Address X)  
+6. Check apply sale already registered
+7. Check if BHM amount of buyer is more than sale deposit
+8. Check set deposit
+9.  Check exact buyer
+10. Invalid apply event
+11. CA exactly confirms invalid value  
+12. Check agent fee is transfered
+13. Confirms sale trade
+14. Sale end
 
 1) Set invalid initial value
 
