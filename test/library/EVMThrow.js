@@ -1,1 +1,3 @@
-export default 'revert'
+module.exports = function(){
+	return 'revert'
+}
