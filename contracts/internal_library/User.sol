@@ -8,7 +8,7 @@ contract User {
   function registerEmail(string _email) public {
     email[msg.sender] = _email;
 
-    RegisterEmail(msg.sender);
+    RegisterEmail(msg.sender, _email);
   }
 
 }
