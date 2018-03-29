@@ -59,7 +59,7 @@ contract BHM is MiniMeToken, User {
     super.enableTransfers(_transfersEnabled);
   }
 
-  function generateTokensByList(address[] _owners, uint[] _amounts) public onlyController  returns (bool) {
+  function generateTokensByList(address[] _owners, uint[] _amounts) public onlyController returns (bool) {
     require(_owners.length == _amounts.length);
 
     for(uint i = 0; i < _owners.length; ++i) {
@@ -86,28 +86,24 @@ contract BHM is MiniMeToken, User {
 
   mapping (address => bool) public certifiedAgent;
 
-  function setAdmin(address _addr, bool _value)
-    public
-    onlyController
-    returns (bool)
-  {
+  function setAdmin(address _addr, bool _value) public onlyController {
     require(_addr != address(0));
     require(admin[_addr] == !_value);
-
     admin[_addr] = _value;
 
     SetAdmin(_addr);
-
-    return true;
   }
 
-  function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
+  function addCertifiedAgent(address _addr, bool _value) public onlyAdmin {
     require(_addr != address(0));
     require(admin[_addr] == !_value);
     certifiedAgent[_addr] = _value;
+    
+    AddCertifiedAgent(_addr);
   }
 
   event SetAdmin(address _addr);
+  event AddCertifiedAgent(address _addr);
 
   ////////////////
   // Functions for Auction
@@ -205,7 +201,6 @@ contract BHM is MiniMeToken, User {
   ////////////////
   // Functions for Lease
   ////////////////
-  //TODO ���ุ ����Ʈ ��Ʈ������ �ϵ��� �ٲܱ�?
   //TODO We have to save this in minime token
   struct LeaseStruct {
   	uint256[] paymentTimestamp;
@@ -231,14 +226,14 @@ contract BHM is MiniMeToken, User {
   function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256) {
   	//check condition
   	var _keyTimestamp = now;
-  	//unique key owner x timestamp, default value of mapping is 0
+  	//unique key is owner x timestamp
   	require(leaseStructs[msg.sender][now].isUsed == false);
   	leaseStructs[msg.sender][_keyTimestamp].deposit = _deposit;
   	leaseStructs[msg.sender][_keyTimestamp].leaseFee = _leaseFee;
   	leaseStructs[msg.sender][_keyTimestamp].isUsed = true;
   	leaseStructs[msg.sender][_keyTimestamp].lock = false;
   	leaseStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
-  	//TODO check length
+  	//TODO check length add BT case
   	for(uint i = 0; i < _paymentTimestamp.length; ++i){
   		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
   		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
@@ -248,21 +243,22 @@ contract BHM is MiniMeToken, User {
   }
 
   //2. apply lease
-  //TODO
+  
   function applyLease(address _to, uint256 _keyTimeStamp) public {
+  	require(leaseStructs[msg.sender][now].isUsed == true);
   	//check lock
   	require(leaseStructs[_to][_keyTimeStamp].lock == false);
   	//set deposit for owner
   	//check uint128
   	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
   	require(_amount >= balanceOfAt(msg.sender, block.number));
-  	//������ deposit���� ����
+  	
   	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
-  	//�������� �־��ְ�
+  	
   	transferFrom(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
-  	//�����ֿ��� ���� �������Է� ���� deposit���� ����, ���� ������ �ܾ��� ��� �Ǵ��� Ȯ��
+  	
   	setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
-  	//set lock
+  	
   	leaseStructs[_to][_keyTimeStamp].lock = true;
   	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
   	//event
@@ -272,15 +268,13 @@ contract BHM is MiniMeToken, User {
   //3. confirm contract by CA
   //check condition
   //CA confirmed
-  //CA bonus?
   //for just lease, we don't need multi check
   function confirmLeaseByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
   	//check it is locked
   	require(leaseStructs[_target][_keyTimeStamp].lock == true);
-  	//need multi check?
-    require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
+  	require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
     //check enough agentFee
-    require(leaseStructs[_target][_keyTimeStamp].agentFee >= balanceOfAt(_target, block.number));
+    require(leaseStructs[_target][_keyTimeStamp].agentFee <= balanceOfAt(_target, block.number));
     //fee?
     transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
 	//confirm
@@ -301,7 +295,7 @@ contract BHM is MiniMeToken, User {
   }
 
   //5. withdraw pre-deposit
-  //������ -> ���� ����
+  //return of the deposit
   function withdrawPreDeposit(address _target, uint256 _keyTimeStamp) public {
   	//require ownership
 	require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
@@ -368,7 +362,7 @@ contract BHM is MiniMeToken, User {
     require(saleStructs[_target][_keyTimeStamp].agentFee <= balanceOfAt(_target, block.number));
     //fee?
     transferFrom(_target, msg.sender, saleStructs[_target][_keyTimeStamp].agentFee);
-	  //confirm
+	//confirm
     saleStructs[_target][_keyTimeStamp].isConfirmed = true;
     ConfirmTradeByCA(_target, _keyTimeStamp);
   }
