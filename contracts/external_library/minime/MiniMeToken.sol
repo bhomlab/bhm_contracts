@@ -53,10 +53,10 @@ contract MiniMeToken is Controlled {
 
         // `value` is the amount of tokens at a specific block number
         uint128 value;
-        
+
         // deposit
         uint128 deposit;
-        
+
         // claimer mapping
         mapping (address => uint128) claimerValue;
     }
@@ -490,41 +490,41 @@ contract MiniMeToken is Controlled {
         require(isContract(controller));
         require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
     }
-    
-    
+
+
 ////////////////
 // Functions for Deposit
 ////////////////
-//TODO confirm ±¸Á¶ Àß »ý°¢ÇÒ °Í, msg.sender¸¸ °¡´ÉÇÏ°Ô
+//TODO confirm ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, msg.senderï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½
 
 
     function setDeposit(address _from, address _to, uint _amount) internal {
         require(transfersEnabled);
-       
+
         if (_amount == 0) {
-             SetDeposit(_from, _to, _amount);   
+             SetDeposit(_from, _to, _amount);
              return;
         }
 
         require(parentSnapShotBlock < block.number);
 
         // If the amount being transfered is more than the balance of the
-        //  account the transfer throws
+        // account the transfer throws
         var previousBalanceFrom = balanceOfAt(_from, block.number); //It already contains deposit logic
-		var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
-		var claimerDepositValue = claimerBalanceAt(_from, block.number, _to);
+		    var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+		    var claimerDepositValue = claimerBalanceAt(_from, block.number, _to);
 
-        require(previousBalanceFrom >= _amount); 
-		// 1 way is enough?
+        require(previousBalanceFrom >= _amount);
+		    // 1 way is enough?
         // First update the balance array with the new value for the address
-        //  sending the tokens
+        // sending the tokens
         updateDepositValueAtNow(balances[_from], previousDepositValueFrom + _amount, claimerDepositValue + _amount, _to);
 
         // An event to make the deposit easy to find on the blockchain
         SetDeposit(_from, _to, _amount);
 
     }
-    
+
     function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _depositValue, uint _claimerDepositValue, address _to
     ) internal  {
         if ((checkpoints.length == 0)
@@ -540,7 +540,7 @@ contract MiniMeToken is Controlled {
            }
     }
 
-	//TODO parentTokenÀº depositBalance°¡ ¾ø´Ù´Â °Í¿¡ À¯ÀÇ
+	//TODO parentTokenï¿½ï¿½ depositBalanceï¿½ï¿½ ï¿½ï¿½ï¿½Ù´ï¿½ ï¿½Í¿ï¿½ ï¿½ï¿½ï¿½ï¿½
     function depositBalanceOfAt(address _owner, uint _blockNumber) public constant
         returns (uint) {
 
@@ -560,9 +560,9 @@ contract MiniMeToken is Controlled {
                 return 0;
             }
             */
-            
+
             return 0;
-            
+
         // This will return the expected balance during normal situations
         } else {
             return getDepositValueAt(balances[_owner], _blockNumber);
@@ -591,9 +591,9 @@ contract MiniMeToken is Controlled {
         }
         return checkpoints[min].deposit;
     }
-    
-    
-	
+
+
+
 	function claimerBalanceAt(address _owner, uint _blockNumber, address _to) public constant
         returns (uint) {
 
@@ -613,15 +613,15 @@ contract MiniMeToken is Controlled {
                 return 0;
             }
             */
-            
+
             return 0;
-            
+
         // This will return the expected balance during normal situations
         } else {
             return getClaimerValueAt(balances[_owner], _blockNumber, _to);
         }
     }
-    
+
     function getClaimerValueAt(Checkpoint[] storage checkpoints, uint _block, address _to
     ) constant internal returns (uint) {
         if (checkpoints.length == 0) return 0;
@@ -644,32 +644,31 @@ contract MiniMeToken is Controlled {
         }
         return checkpoints[min].claimerValue[_to];
     }
-        
-	//ÀÎÃâÀ» ÀÌÇàÇÏ´Â ÇÔ¼ö deposit¿¡¼­ balance·ÎÀÇ ÀÌµ¿
+
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Ô¼ï¿½ depositï¿½ï¿½ï¿½ï¿½ balanceï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 	function withdrawDeposit (address _from, address _to, uint _amount) internal {
 		if (_amount == 0) {
-             WithdrawDeposit(_from, _to, _amount);   
+             WithdrawDeposit(_from, _to, _amount);
              return;
         }
-        
+
         var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
         var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
-        var previousBalanceTo = balanceOfAt(_to, block.number); 
+        var previousBalanceTo = balanceOfAt(_to, block.number);
         var previousBalanceFrom = balanceOfAt(_from, block.number);
-                
+
         require(previousDepositValueFrom >= _amount);
         require(previousClaimerValue >= _amount);
-        
+
         //update deposit value
         updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
-		//update from balance 
-		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-		
+		    //update from balance
+		    updateValueAtNow(balances[_to], previousBalanceTo + _amount);
         // An event to make the deposit easy to find on the blockchain
-        WithdrawDeposit(_from, _to, _amount);        
+        WithdrawDeposit(_from, _to, _amount);
 	}
-    
-	
+
+
 
 //////////
 // Safety Methods
