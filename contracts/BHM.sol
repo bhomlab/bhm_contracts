@@ -285,94 +285,101 @@ contract BHM is MiniMeToken, User {
   event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
 
   ////////////////
-  // Functions for Lease
+  // Functions for Auction
   ////////////////
-  struct AuctionStruct {
-    uint256 lowestprice;
-    uint256 highestBid;
-    uint256 bid;
-    uint256 agentFee;
-    uint256 biddingTime;
-    uint256 auctionStartTime;
-    uint256 auctionEndTime;
-    address beneficiary;
-    address highestBidder;
-    address bidder;
-    bool isUsed;
-    bool lock;
-    bool auctionEnded;
-    bool isConfirmed;
-  }
+    struct AuctionStruct {
+      uint256 lowestprice;
+      uint256 highestBid;
+      uint256 bid;
+      uint256 agentFee;
+      //uint256 biddingTime;
+      //uint256 auctionStartTime;
+      uint256 auctionEndTime;
+      address beneficiary;
+      address highestBidder;
+      address bidder;
+      bool isUsed;
+      bool lock;
+      bool auctionEnded;
+      bool isConfirmed;
+    }
 
-  //Mapping auctionStruts
-  mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;
+    // auctionStruts Mapping
+    mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;
 
-  //1. create Auction , msg.sender = beneficiary
-  function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256) {
-    var _keyTimeStamp = now;
-    require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
-    require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
-    auctionStructs[msg.sender][_keyTimeStamp].auctionStartTime = now;
-    auctionStructs[msg.sender][_keyTimeStamp].lowestprice = _lowestprice;
-    auctionStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
-    auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime  = _auctionEndTime;
-    auctionStructs[msg.sender][_keyTimeStamp].isUsed = true;
-    auctionStructs[msg.sender][_keyTimeStamp].lock = false;
-    auctionStructs[msg.sender][_keyTimeStamp].auctionEnded = false;
+    // 1. create Auction , msg.sender = beneficiary
+    // @param _lowestprice Lowestprice of Auction
+    // @param _agentFee
+    // @param _auctionEndTime
+    // @Return token values
+    function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256) {
+      var _keyTimeStamp = now;
+      require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
+      require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
+      //auctionStructs[msg.sender][_keyTimeStamp].auctionStartTime = now;
+      auctionStructs[msg.sender][_keyTimeStamp].lowestprice = _lowestprice;
+      auctionStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
+      auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime  = _auctionEndTime;
+      auctionStructs[msg.sender][_keyTimeStamp].isUsed = true;
+      auctionStructs[msg.sender][_keyTimeStamp].lock = false;
+      auctionStructs[msg.sender][_keyTimeStamp].auctionEnded = false;
 
-    CreateAuction(msg.sender, _lowestprice, _agentFee, _auctionEndTime);
-  }
+      CreateAuction(msg.sender, _lowestprice, _agentFee, _auctionEndTime);
+    }
 
-  //2. bid Auction
-  function bidAuction(address _beneficiary, uint256 _keyTimeStamp, uint256 _bid, uint256 _biddingTime) public {
-    require(auctionStructs[_beneficiary][_keyTimeStamp].lock == false);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= now);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= auctionStructs[msg.sender][_keyTimeStamp].biddingTime);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice <= balanceOfAt(msg.sender, block.number));
-    require(_bid <= balanceOfAt(msg.sender, block.number));
-    require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice < _bid);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].highestBid < _bid);
-    setDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
-    auctionStructs[_beneficiary][_keyTimeStamp].biddingTime = _biddingTime;
-    auctionStructs[_beneficiary][_keyTimeStamp].lock = true;
-    auctionStructs[_beneficiary][_keyTimeStamp].bidder = msg.sender;
-    auctionStructs[_beneficiary][_keyTimeStamp].bid = _bid;
-    auctionStructs[_beneficiary][_keyTimeStamp].highestBidder = auctionStructs[_beneficiary][_keyTimeStamp].bidder;
-    auctionStructs[_beneficiary][_keyTimeStamp].highestBid = auctionStructs[_beneficiary][_keyTimeStamp].bid;
+    // 2. bid Auction
+    // @param _beneficiary
+    // @param _keyTimeStamp
+    // @param _bid
+    // @param
+    function bidAuction(address _beneficiary, uint256 _keyTimeStamp, uint256 _bid) public {
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lock == false);
+      require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= now);
+      //require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= _keyTimeStamp;
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice <= balanceOfAt(msg.sender, block.number));
+      require(_bid <= balanceOfAt(msg.sender, block.number));
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice < _bid);
+      require(auctionStructs[_beneficiary][_keyTimeStamp].highestBid < _bid);
+      setDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+      //auctionStructs[_beneficiary][_keyTimeStamp].biddingTime = now;
+      auctionStructs[_beneficiary][_keyTimeStamp].lock = true;
+      auctionStructs[_beneficiary][_keyTimeStamp].bidder = msg.sender;
+      auctionStructs[_beneficiary][_keyTimeStamp].bid = _bid;
+      auctionStructs[_beneficiary][_keyTimeStamp].highestBidder = auctionStructs[_beneficiary][_keyTimeStamp].bidder;
+      auctionStructs[_beneficiary][_keyTimeStamp].highestBid = auctionStructs[_beneficiary][_keyTimeStamp].bid;
 
-    BidAuction(_beneficiary, _keyTimeStamp, auctionStructs[_beneficiary][_keyTimeStamp].highestBidder,
-      auctionStructs[_beneficiary][_keyTimeStamp].highestBid, _biddingTime);
-  }
+      BidAuction(_beneficiary, now, auctionStructs[_beneficiary][_keyTimeStamp].highestBidder,
+        auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+    }
 
-  //3. Escro Auction add certifiedAgent
-  function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent {
-    require(auctionStructs[_beneficiary][_keyTimeStamp].lock == true);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed == false);
-    require(auctionStructs[_beneficiary][_keyTimeStamp].agentFee <= balanceOfAt(_beneficiary, block.number));
-    transferFrom(_beneficiary, msg.sender, auctionStructs[_beneficiary][_keyTimeStamp].agentFee);
-    auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed = true;
+    //3. Escro Auction add certifiedAgent
+    function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+      require(auctionStructs[_beneficiary][_keyTimeStamp].lock == true);
+      require(auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed == false);
+      require(auctionStructs[_beneficiary][_keyTimeStamp].agentFee <= balanceOfAt(_beneficiary, block.number));
+      transferFrom(_beneficiary, msg.sender, auctionStructs[_beneficiary][_keyTimeStamp].agentFee);
+      auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed = true;
 
-    EscroAuction(_beneficiary, _keyTimeStamp);
-  }
+      EscroAuction(_beneficiary, _keyTimeStamp);
+    }
 
-  //4. withDraw Aunction (End Auction)
-  function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public {
-    require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
-    require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
-    auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
-    withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+    //4. withDraw Aunction (End Auction)
+    function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public {
+      require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
+      require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
+      auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
+      withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
 
-    AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid
-      , _keyTimeStamp);
-  }
+      AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+    }
 
-  //5. Events
-  event CreateAuction(address _beneficiary, uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime);
-  event BidAuction(address _beneficiary, uint256 _keyTimeStamp, address highestBidder, uint256 _highestBid, uint256 _biddingTime);
-  event EscroAuction(address _target, uint256 _keyTimeStamp);
-  event AuctionEnd(address _highestBidder, uint256 _highestBid, uint256 _keyTimeStamp);
+    //5. Events
+    event CreateAuction(address _beneficiary, uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime);
+    event BidAuction(address _beneficiary, uint256 _keyTimeStamp, address highestBidder, uint256 _highestBid);
+    event EscroAuction(address _target, uint256 _keyTimeStamp);
+    event AuctionEnd(address _highestBidder, uint256 _highestBid);
 
-  ////////////////
-  // Functions for Deposit
-  ////////////////
+    ////////////////
+    // Functions for Deposit
+    ////////////////
 }
