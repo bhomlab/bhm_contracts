@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 
 import './external_library/minime/MiniMeToken.sol';
 
-contract BHM is MiniMeToken {
+contract BHM is MiniMeToken, User {
   ////////////////
   // Functions for Block
   ////////////////
