@@ -292,8 +292,6 @@ contract BHM is MiniMeToken, User {
       uint256 highestBid;
       uint256 bid;
       uint256 agentFee;
-      //uint256 biddingTime;
-      //uint256 auctionStartTime;
       uint256 auctionEndTime;
       address beneficiary;
       address highestBidder;
@@ -316,7 +314,7 @@ contract BHM is MiniMeToken, User {
       var _keyTimeStamp = now;
       require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
       require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
-      //auctionStructs[msg.sender][_keyTimeStamp].auctionStartTime = now;
+
       auctionStructs[msg.sender][_keyTimeStamp].lowestprice = _lowestprice;
       auctionStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
       auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime  = _auctionEndTime;
@@ -331,17 +329,15 @@ contract BHM is MiniMeToken, User {
     // @param _beneficiary
     // @param _keyTimeStamp
     // @param _bid
-    // @param
     function bidAuction(address _beneficiary, uint256 _keyTimeStamp, uint256 _bid) public {
       require(auctionStructs[_beneficiary][_keyTimeStamp].lock == false);
       require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= now);
-      //require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime >= _keyTimeStamp;
       require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice <= balanceOfAt(msg.sender, block.number));
       require(_bid <= balanceOfAt(msg.sender, block.number));
       require(auctionStructs[_beneficiary][_keyTimeStamp].lowestprice < _bid);
       require(auctionStructs[_beneficiary][_keyTimeStamp].highestBid < _bid);
       setDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
-      //auctionStructs[_beneficiary][_keyTimeStamp].biddingTime = now;
+
       auctionStructs[_beneficiary][_keyTimeStamp].lock = true;
       auctionStructs[_beneficiary][_keyTimeStamp].bidder = msg.sender;
       auctionStructs[_beneficiary][_keyTimeStamp].bid = _bid;
@@ -352,7 +348,9 @@ contract BHM is MiniMeToken, User {
         auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
     }
 
-    //3. Escro Auction add certifiedAgent
+    // 3. Escro Auction add certifiedAgent
+    // @param _beneficiary
+    // @param _keyTimeStamp
     function escroAuction(address _beneficiary, uint256 _keyTimeStamp) public onlyCertifiedAgent {
       require(auctionStructs[_beneficiary][_keyTimeStamp].lock == true);
       require(auctionStructs[_beneficiary][_keyTimeStamp].isConfirmed == false);
@@ -363,7 +361,7 @@ contract BHM is MiniMeToken, User {
       EscroAuction(_beneficiary, _keyTimeStamp);
     }
 
-    //4. withDraw Aunction (End Auction)
+    // 4. withDraw Aunction (End Auction)
     function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public {
       require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
       require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
