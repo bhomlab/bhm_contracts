@@ -159,7 +159,8 @@ Put data into permanent storage is quite expensive. If possible, we have to avoi
 3) Fork of the token
 
 #### 1.4. Block Test Case
-
+1. Set invalid initial value
+2. Check already registered
 
 ### 2. BHOM.FR.SMARTCONTRACT.AUCTION
 
@@ -205,8 +206,8 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 2.2.4 Bidding by BHM
 
 
-°æ¸Å°¡ ³¡³ª¾ß withdraw°¡ °¡´ÉÇÏ´Ù?? ³Ê¹« ±æ¸é?
-Highest bidder°¡ ³ªÅ¸³ª¸é withdraw°¡ °¡´ÉÇØÁø´Ù.
+ê²½ë§¤ê°€ ëë‚˜ì•¼ withdrawê°€ ê°€ëŠ¥í•˜ë‹¤?? ë„ˆë¬´ ê¸¸ë©´?
+Highest bidderê°€ ë‚˜íƒ€ë‚˜ë©´ withdrawê°€ ê°€ëŠ¥í•´ì§„ë‹¤.
 
 #### 2.3. Exceptional Case
 
