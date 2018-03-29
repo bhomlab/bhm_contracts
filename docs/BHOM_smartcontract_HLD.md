@@ -53,7 +53,7 @@ Deposit is one of the most important part of this smart contract. Only authorize
 	}
 ```
 
-//TODO
+
 2) Safe withdraw by claimer
 
 ```bash
@@ -206,8 +206,6 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 2.2.4 Bidding by BHM
 
 
-경매가 끝나야 withdraw가 가능하다?? 너무 길면?
-Highest bidder가 나타나면 withdraw가 가능해진다.
 
 #### 2.3. Exceptional Case
 
@@ -408,18 +406,24 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
 
 #### 6.1. Requirement
 
-1) Smart contract offer register function for BHM platform. By calling smart contract, 
+1) Smart contract offer register function for BHM platform. By calling function smart contract, we can match user ID and user address. By matching we can easily offer information out side of blockchain.
 
 #### 6.2. function description
 
 6.2.1 
 
-For matching User ID and Ethereum address, we need a function for identification. Register Email. Remove User Information.
+For matching User ID and Ethereum address, we need a function for identification. Like register email.
 
 ```bash
-      mapping (address => string) userEmail;   
-      
-        
+  mapping (address => string) email;
+
+  event RegisterEmail(address _addr, string _email);
+
+  function registerEmail(string _email) public {
+    email[msg.sender] = _email;
+
+    RegisterEmail(msg.sender, _email);
+  }
 ```
 
 #### 6.3. Exceptional Case
