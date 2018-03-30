@@ -655,7 +655,7 @@ contract MiniMeToken is Controlled {
         var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
         var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
         var previousBalanceTo = balanceOfAt(_to, block.number);
-        var previousBalanceFrom = balanceOfAt(_from, block.number);
+        //var previousBalanceFrom = balanceOfAt(_from, block.number);
 
         require(previousDepositValueFrom >= _amount);
         require(previousClaimerValue >= _amount);

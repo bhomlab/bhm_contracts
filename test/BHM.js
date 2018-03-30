@@ -1,5 +1,6 @@
 const ether = require("./library/ether");
 const EVMThrow = require("./library/EVMThrow");
+const assert = require('assert');
 
 const BigNumber = web3.BigNumber;
 BigNumber.prototype.diff = function diff(n, r, e = new BigNumber(1e-10)) {
@@ -52,50 +53,11 @@ contract("BHM", async ([ owner, other, beneficiary1, beneficiary2, ...accounts ]
       
       console.log(balance2);
 
-      balance2.diff(balance1, amount)
-        .should.be.equal(true);
+      assert.equal(balance2 - amount, balance1);
     });
   });
 
-  describe("#2 block", async () => {
-    it("2-1 only controller can block account", async () => {
-      await token.blockAddress(beneficiary2, {
-        from: beneficiary1,
-      }).should.be.rejectedWith(EVMThrow);
-
-      await token.blockAddress(beneficiary2, {
-        from: owner,
-      }).should.be.fulfilled;
-    });
-
-    it("2-2 blocked user should not transfer tokens", async () => {
-      await token.transfer(beneficiary1, amount, {
-        from: beneficiary2,
-      }).should.be.rejectedWith(EVMThrow);
-    });
-
-    it("2-3 only controller can unblock account", async () => {
-      await token.unblockAddress(beneficiary2, {
-        from: beneficiary1,
-      }).should.be.rejectedWith(EVMThrow);
-
-      await token.unblockAddress(beneficiary2, {
-        from: owner,
-      }).should.be.fulfilled;
-    });
-
-    it("2-4 unblocked user should transfer tokens", async () => {
-      await token.transfer(beneficiary1, amount, {
-        from: beneficiary2,
-      }).should.be.fulfilled;
-
-      (await token.balanceOf(beneficiary2))
-        .should.be.bignumber.equal(0);
-      (await token.balanceOf(beneficiary1))
-        .should.be.bignumber.equal(amount);
-    });
-  });
-
+  
  
     
 });
