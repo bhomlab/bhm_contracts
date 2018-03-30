@@ -238,9 +238,6 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 22) After transfer highest bid, auction must be end
 23) Auction end
 
-
-
-
 ### 3. BHOM.FR.SMARTCONTRACT.LEASE
 
 #### 3.1. Requirement
