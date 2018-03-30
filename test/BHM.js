@@ -57,7 +57,7 @@ contract("BHM", async ([ owner, other, beneficiary1, beneficiary2, ...accounts ]
     });
   });
 
-  // describe("#2 block", async () => {
+  describe("#2 block", async () => {
   //   it("2-1 only controller can block account", async () => {
   //     await token.blockAddress(beneficiary2, {
   //       from: beneficiary1,
