@@ -319,8 +319,21 @@ Every period, owner get right for each payment.
 
 1) Set invalid initial value
 2) Check every period of lease is paid
-
-
+3) Check lease already registered
+4) Check payment time stamp
+5) Check create lease    
+6) Anyone can make lease (Blocked Address X)
+7) Check if amount is deposit plus lease fee
+8) Check if BHM amount of renter more than agent fee  
+9) Check setDeposit
+10) Check transfer deposit
+11) Check exact renter
+12) Check if BHM amount of renter more than agent fee
+13) Check if payment time is less than current time and renter have not paid (withdrawLeaseFee)
+14) Withdraws BHM(lease fee) at renter account
+15) Check renter address
+16) Check if payment time is less than current time and renter have paid (withdrawPreDeposit)
+17) Lease end
 
 ### 4. BHOM.FR.SMARTCONTRACT.SALE
 
@@ -364,9 +377,6 @@ Transaction created by owner.
 12) Check agent fee is transfered
 13) Confirms sale trade
 14) Sale end
-
-1) Set invalid initial value
-
 
 ### 5. BHOM.FR.SMARTCONTRACT.MIGRATION
 
