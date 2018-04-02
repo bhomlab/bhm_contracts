@@ -35,21 +35,21 @@ Deposit is one of the most important part of this smart contract. Only authorize
 ```bash
 	function withdrawDeposit (address _from, address _to, uint _amount) internal {
 		if (_amount == 0) {
-             WithdrawDeposit(_from, _to, _amount);
-             return;
-        }
+		     WithdrawDeposit(_from, _to, _amount);
+		     return;
+		}
 
-        var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
-        var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
-        var previousBalanceTo = balanceOfAt(_to, block.number);
-        var previousBalanceFrom = balanceOfAt(_from, block.number);
+		var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+		var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
+		var previousBalanceTo = balanceOfAt(_to, block.number);
+		var previousBalanceFrom = balanceOfAt(_from, block.number);
 
-        require(previousDepositValueFrom >= _amount);
-        require(previousClaimerValue >= _amount);
+		require(previousDepositValueFrom >= _amount);
+		require(previousClaimerValue >= _amount);
 
-        updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
-		  updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-        WithdrawDeposit(_from, _to, _amount);
+		updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
+		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+		WithdrawDeposit(_from, _to, _amount);
 	}
 ```
 
@@ -57,15 +57,26 @@ Deposit is one of the most important part of this smart contract. Only authorize
 2) Safe withdraw by claimer
 
 ```bash
-  function withdrawByClaimer() public {
-  	require(state != State.Active);
-  	require();
-  	uint256 balance = deposit.balance;
-    claimer.transfer(balance);  
-  }
+	function withdrawDeposit (address _from, address _to, uint _amount) internal {
+		if (_amount == 0) {
+		     WithdrawDeposit(_from, _to, _amount);
+		     return;
+		}
+
+		var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
+		var previousClaimerValue = claimerBalanceAt(_from, block.number, _to);
+		var previousBalanceTo = balanceOfAt(_to, block.number);
+
+		require(previousDepositValueFrom >= _amount);
+		require(previousClaimerValue >= _amount);
+
+		updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
+		updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+		WithdrawDeposit(_from, _to, _amount);
+	}
 ```
 
-3)
+
 
 1.2.2 User Level Policy
 
@@ -109,13 +120,19 @@ As level of user, only user who has authority can do specific action.
 
 ```bash
   modifier onlyCertifiedAgent {
-   require(certifiedAgent[msg.sender]);
-    _;
+  	require(certifiedAgent[msg.sender]);
+  	_;
   }
 
-  function confirmByCA(address _contractAddress, address _owner) onlyCertifiedAgent public {
-    require(_addr != address(0));
-    AuctionStructs[_owner]._contractAddress.auctionEnd();
+  function confirmLeaseByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
+  	require(leaseStructs[_target][_keyTimeStamp].lock == true);
+  	require(leaseStructs[_target][_keyTimeStamp].isConfirmed == false);
+  	require(leaseStructs[_target][_keyTimeStamp].agentFee <= balanceOfAt(_target, block.number));
+  	
+	transferFrom(_target, msg.sender, leaseStructs[_target][_keyTimeStamp].agentFee);
+	
+	leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
+    	ConfirmLeaseByCA(_target, _keyTimeStamp);
   }
 ```
 
@@ -142,14 +159,15 @@ Unless traditional registration system is replaced by blockchain,
 Put data into permanent storage is quite expensive. If possible, we have to avoid using permanent storage.
 
 ```bash
-  function addCertifiedAgent(address _addr, bool _value) onlyAdmin public {
-    require(_addr != address(0));
-    require(admin[_addr] == !_value);
-    certifiedAgent[_addr] = _value;
-  }
+	function addCertifiedAgent(address _addr, bool _value) public onlyAdmin {
+		require(_addr != address(0));
+		require(admin[_addr] == !_value);
+		certifiedAgent[_addr] = _value;
+
+		AddCertifiedAgent(_addr);
+	}
+  	event AddCertifiedAgent(address _addr);
 ```
-
-
 
 
 #### 1.3. Exceptional Case
@@ -182,11 +200,37 @@ See 1.2.1
 Transaction created by owner. Owner is 'Who want to sell real estate'.
 
 ```bash
-  function Auction(uint _biddingTime, address _beneficiary ) public {
-    tokenAddress = msg.sender;
-    beneficiary = _beneficiary;
-    auctionEnd = _biddingTime;
-  }
+	struct AuctionStruct {
+		uint256 lowestprice;
+		uint256 highestBid;
+		uint256 bid;
+		uint256 agentFee;
+		uint256 auctionEndTime;
+		address beneficiary;
+		address highestBidder;
+		address bidder;
+		bool isUsed;
+		bool lock;
+		bool auctionEnded;
+		bool isConfirmed;
+	}
+	
+	mapping (address => mapping(uint256 => AuctionStruct)) auctionStructs;	
+    
+	function createAuction(uint256 _lowestprice, uint256 _agentFee, uint256 _auctionEndTime) public returns (uint256) {
+		var _keyTimeStamp = now;
+		require(auctionStructs[msg.sender][_keyTimeStamp].isUsed == false);
+		require(auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime > now);
+
+		auctionStructs[msg.sender][_keyTimeStamp].lowestprice = _lowestprice;
+		auctionStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
+		auctionStructs[msg.sender][_keyTimeStamp].auctionEndTime  = _auctionEndTime;
+		auctionStructs[msg.sender][_keyTimeStamp].isUsed = true;
+		auctionStructs[msg.sender][_keyTimeStamp].lock = false;
+		auctionStructs[msg.sender][_keyTimeStamp].auctionEnded = false;
+
+		CreateAuction(msg.sender, _lowestprice, _agentFee, _auctionEndTime);
+	}
 ```
 
 2.2.3 Winner
@@ -194,13 +238,14 @@ Transaction created by owner. Owner is 'Who want to sell real estate'.
 Highest bidder will be winner of the auction. When bidding, token saved in deposit. If highest bidder appear, other bidders can withdraw their tokens.
 
 ```bash    
-  function auctionEnd() public {     
-     require(now >= auctionEnd);
-     require(!ended);
-     ended = true;
-     AuctionEnded(highestBidder, highestBid);
-     beneficiary.transfer(highestBid);
-  }
+	function withDrawAuction(address _beneficiary, uint256 _keyTimeStamp) public {
+		require(auctionStructs[_beneficiary][_keyTimeStamp].auctionEndTime <= now);
+		require(!auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded);
+		auctionStructs[_beneficiary][_keyTimeStamp].auctionEnded = true;
+		withdrawDeposit(msg.sender, _beneficiary, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+
+		AuctionEnd(auctionStructs[_beneficiary][_keyTimeStamp].highestBidder, auctionStructs[_beneficiary][_keyTimeStamp].highestBid);
+	}
 ```
 
 2.2.4 Bidding by BHM
@@ -211,7 +256,6 @@ Highest bidder will be winner of the auction. When bidding, token saved in depos
 
 1) Invalid initial value
 2) Smaller amount of deposit than price
-3)
 
 #### 2.4. Block Test Case
 1) Set invalid initial value
@@ -257,37 +301,35 @@ See 1.2.1
 Transaction created by owner. Lease can be done simple contract. It does not need double confirm.
 
 ```bash
-  struct LeaseStruct {
-    uint256 deposit;
-  	uint256 leaseFee;
-  	uint256[] paymentTimestamp;
-  	address rent;
-  	address confirmedCA;
-  	address doubleConfirmedCA;
-  	bool isUsed;
-    bool lock;
-    bool isConfirmed;
-  }
-  //KEY IS LEASETIMESTAMP == NOW
-  mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
+	struct LeaseStruct {
+		uint256 deposit;
+		uint256 leaseFee;
+		uint256[] paymentTimestamp;
+		address rent;
+		address confirmedCA;
+		address doubleConfirmedCA;
+		bool isUsed;
+		bool lock;
+		bool isConfirmed;
+	}
+  	mapping (address => mapping(uint256 => LeaseStructs)) leaseStructs;
 
-  function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
+	function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp) public returns (uint256){
+		//check condition
 
-  	//check condition
+		//unique key owner x timestamp, default value of mapping is 0
+		require(leaseStructs[msg.sender][now].isUsed == false);
+		leaseStructs[msg.sender][now].deposit = _deposit;
+		leaseStructs[msg.sender][now].leaseFee = _leaseFee;
+		leaseStructs[msg.sender][now].isUsed = true;
+		leaseStructs[msg.sender][now].lock = false;
+		//TODO check length
+		for(uint i = 0; i < _paymentTimestamp.length; ++i){
+			leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
+		}
 
-  	//unique key owner x timestamp, default value of mapping is 0
-  	require(leaseStructs[msg.sender][now].isUsed == false);
-  	leaseStructs[msg.sender][now].deposit = _deposit;
-  	leaseStructs[msg.sender][now].leaseFee = _leaseFee;
-  	leaseStructs[msg.sender][now].isUsed = true;
-  	leaseStructs[msg.sender][now].lock = false;
-  	//TODO check length
-  	for(uint i = 0; i < _paymentTimestamp.length; ++i){
-  		leaseStructs[msg.sender][now].paymentTimestamp.push(_paymentTimestamp[i]);
-  	}
-
-  	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
-  }
+		CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, now, msg.sender);
+	}
 
 ```
 
@@ -412,42 +454,6 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
 
 1) Set invalid initial value
 
-### 5. BHOM.FR.SMARTCONTRACT.MIGRATION
-
-#### 5.1. Requirement
-
-1) Smart contract must have a data for migration.
-
-#### 5.2. function description
-
-5.2.1 Migration
-
-Every fork, all data can be accessed by next token. Using minime token, we can access previous data. And also unimportant data will be saved at traditional database. Checkpoint is struct for saving data(especially tokens). We also need similar struct for saving contract data.
-
-```bash
-    struct  Checkpoint {
-        uint128 fromBlock;
-        uint128 value;
-        uint128 deposit;
-        mapping (address => uint128) claimerValue;
-    }    
-    struct CheckpointForContract {
-
-
-	}    
-```
-
-#### 5.3. Exceptional Case
-
-1) Invalid initial value
-
-#### 5.4. Block Test Case
-
-1) Set invalid initial value
-
-
-
-
 
 ### 6. BHOM.FR.SMARTCONTRACT.REGISTERWALLET
 
@@ -462,15 +468,15 @@ Every fork, all data can be accessed by next token. Using minime token, we can a
 For matching User ID and Ethereum address, we need a function for identification. Like register email.
 
 ```bash
-  mapping (address => string) email;
+	mapping (address => string) email;
 
-  event RegisterEmail(address _addr, string _email);
+		event RegisterEmail(address _addr, string _email);
 
-  function registerEmail(string _email) public {
-    email[msg.sender] = _email;
+		function registerEmail(string _email) public {
+		email[msg.sender] = _email;
 
-    RegisterEmail(msg.sender, _email);
-  }
+		RegisterEmail(msg.sender, _email);
+	}
 ```
 
 #### 6.3. Exceptional Case
