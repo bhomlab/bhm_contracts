@@ -518,24 +518,26 @@ contract MiniMeToken is Controlled {
 		    // 1 way is enough?
         // First update the balance array with the new value for the address
         // sending the tokens
-        updateDepositValueAtNow(balances[_from], previousDepositValueFrom + _amount, claimerDepositValue + _amount, _to);
+        updateDepositValueAtNow(balances[_from], previousBalanceFrom - _amount, previousDepositValueFrom + _amount, claimerDepositValue + _amount, _to);
 
         // An event to make the deposit easy to find on the blockchain
         SetDeposit(_from, _to, _amount);
 
     }
 
-    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _depositValue, uint _claimerDepositValue, address _to
+    function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value,uint _depositValue, uint _claimerDepositValue, address _to
     ) internal  {
         if ((checkpoints.length == 0)
         || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
                Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
                newCheckPoint.fromBlock =  uint128(block.number);
                newCheckPoint.deposit = uint128(_depositValue);
+               newCheckPoint.value = uint128(_value);
                newCheckPoint.claimerValue[_to] = uint128(_claimerDepositValue);
            } else {
                Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
                oldCheckPoint.deposit = uint128(_depositValue);
+               oldCheckPoint.value = uint128(_value);
                oldCheckPoint.claimerValue[_to] = uint128(_claimerDepositValue);
            }
     }
@@ -645,7 +647,7 @@ contract MiniMeToken is Controlled {
         return checkpoints[min].claimerValue[_to];
     }
 
-	
+
 	function withdrawDeposit (address _from, address _to, uint _amount) internal {
 		if (_amount == 0) {
              WithdrawDeposit(_from, _to, _amount);
@@ -661,9 +663,9 @@ contract MiniMeToken is Controlled {
         require(previousClaimerValue >= _amount);
 
         //update deposit value
-        updateDepositValueAtNow(balances[_from], previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
-	    //update from balance
-	    updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        updateDepositValueAtNow(balances[_from], previousBalanceTo + _amount, previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
+	      //update from balance
+	      updateValueAtNow(balances[_to], previousBalanceTo + _amount);
         // An event to make the deposit easy to find on the blockchain
         WithdrawDeposit(_from, _to, _amount);
 	}

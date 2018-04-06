@@ -3,7 +3,8 @@ pragma solidity ^0.4.19;
 import './external_library/minime/MiniMeToken.sol';
 import './internal_library/User.sol';
 
-contract BHM is MiniMeToken, User, EOS {
+
+contract BHM is MiniMeToken, User, EOS{
   ////////////////
   // Functions for Block
   ////////////////
@@ -98,7 +99,7 @@ contract BHM is MiniMeToken, User, EOS {
     require(_addr != address(0));
     require(admin[_addr] == !_value);
     certifiedAgent[_addr] = _value;
-    
+
     AddCertifiedAgent(_addr);
   }
 
@@ -197,7 +198,7 @@ contract BHM is MiniMeToken, User, EOS {
     event BidAuction(address _beneficiary, uint256 _keyTimeStamp, address highestBidder, uint256 _highestBid);
     event EscroAuction(address _target, uint256 _keyTimeStamp);
     event AuctionEnd(address _highestBidder, uint256 _highestBid);
-  
+
   ////////////////
   // Functions for Lease
   ////////////////
@@ -243,7 +244,7 @@ contract BHM is MiniMeToken, User, EOS {
   }
 
   //2. apply lease
-  
+
   function applyLease(address _to, uint256 _keyTimeStamp) public {
   	require(leaseStructs[msg.sender][now].isUsed == true);
   	//check lock
@@ -252,13 +253,13 @@ contract BHM is MiniMeToken, User, EOS {
   	//check uint128
   	uint _amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
   	require(_amount >= balanceOfAt(msg.sender, block.number));
-  	
+
   	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
-  	
+
   	transferFrom(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
-  	
+
   	setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
-  	
+
   	leaseStructs[_to][_keyTimeStamp].lock = true;
   	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
   	//event
@@ -366,7 +367,7 @@ contract BHM is MiniMeToken, User, EOS {
     saleStructs[_target][_keyTimeStamp].isConfirmed = true;
     ConfirmTradeByCA(_target, _keyTimeStamp);
   }
- 
+
   event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
   event ApplySale(address _to, uint256 _keyTimeStamp, uint256 _now, address _senderAddress);
   event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
