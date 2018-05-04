@@ -1,14 +1,19 @@
 pragma solidity ^0.4.19;
 
 contract EOS {
-  mapping (address => string) ethAddressForEOS;
 
-  event RegisterEOSAddress(address _addr, string _eosAddr);
+  struct userEOS {
+      string eosKey;
+      uint eosAmount;
+  }
 
-  function eegisterEOSAddress(string _eosAddr) public {
-    ethAddressForEOS[msg.sender] = _eosAddr;
+  mapping (address => userEOS) ethAddressForEOS;
+  event RegisterEOSAddress(address _addr, string _eosKey);
 
-    RegisterEOSAddress(msg.sender, _eosAddr);
+  function registerEOSAddress(string _eosKey) public returns (bool) {
+    ethAddressForEOS[msg.sender].eosKey = _eosKey;
+    RegisterEOSAddress(msg.sender , ethAddressForEOS[msg.sender].eosKey);
+   	return true;
   }
 
 }
