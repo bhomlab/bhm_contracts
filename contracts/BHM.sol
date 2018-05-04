@@ -45,7 +45,7 @@ contract BHM is MiniMeToken, User, EOS{
     return super.transfer(_to, _amount);
   }
 
-  function transferFrom(address _from, address _to, uint256 _amount) public onlyNotBlocked(_from) returns (bool success) {
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
     return super.transferFrom(_from, _to, _amount);
   }
 
@@ -70,6 +70,19 @@ contract BHM is MiniMeToken, User, EOS{
 
     return true;
   }
+
+  //test 즉시지불
+  function initialPayment(address _to, uint256 _amount) public returns (bool){
+    immediatelyTransfer(_to, _amount);
+    Transinit(msg.sender, _to, _amount);
+  }
+
+  function immediatelyTransfer(address _to, uint256 _amount) internal returns (bool success) {
+    return super.transfer(_to, _amount);
+  }
+
+  event Transinit(address _from, address _to, uint256 _amount);
+  //test End
 
   ////////////////
   // Functions for User Level Policy
@@ -240,7 +253,6 @@ contract BHM is MiniMeToken, User, EOS{
   		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
   		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
   	}
-
   	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, _keyTimestamp, msg.sender);
   }
 
@@ -310,7 +322,7 @@ contract BHM is MiniMeToken, User, EOS{
   //6. cancel lease before confirm
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
-  event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp);
+  event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp); 
 
   ////////////////
   // Functions for Sale
@@ -329,7 +341,6 @@ contract BHM is MiniMeToken, User, EOS{
   mapping (address => mapping(uint256 => SaleStruct)) saleStructs;
 
   function createSale(uint256 _deposit, bool _useCA, uint256 _agentFee) public returns (uint256){
-
   	//check condition
   	var _keyTimestamp = now;
   	//unique key owner x timestamp, default value of mapping is 0
@@ -339,20 +350,21 @@ contract BHM is MiniMeToken, User, EOS{
   	saleStructs[msg.sender][_keyTimestamp].lock = false;
   	saleStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
 
-  	CreateSale(_deposit, _useCA,  now, msg.sender);
+  	CreateSale(saleStructs[msg.sender][_keyTimestamp].deposit, saleStructs[msg.sender][_keyTimestamp].agentFee,
+      saleStructs[msg.sender][_keyTimestamp].isUsed,  now, msg.sender);
   }
 
   function applySale(address _to, uint256 _keyTimeStamp) public {
   	//check lock
   	require(saleStructs[_to][_keyTimeStamp].lock == false);
   	//set deposit for owner
-  	require(saleStructs[_to][_keyTimeStamp].deposit <= balanceOfAt(msg.sender, block.number));
+    require(saleStructs[_to][_keyTimeStamp].deposit <= balanceOf(msg.sender));
   	setDeposit(msg.sender, _to, saleStructs[_to][_keyTimeStamp].deposit);
   	//set lock
   	saleStructs[_to][_keyTimeStamp].lock = true;
   	saleStructs[_to][_keyTimeStamp].buyer = msg.sender;
   	//event
-  	ApplySale(_to, _keyTimeStamp, now, msg.sender);
+  	ApplySale(_to, _keyTimeStamp, saleStructs[_to][_keyTimeStamp].deposit, now, saleStructs[_to][_keyTimeStamp].buyer);
   }
 
   function confirmTradeByCA(address _target, uint256 _keyTimeStamp) public onlyCertifiedAgent {
@@ -361,19 +373,23 @@ contract BHM is MiniMeToken, User, EOS{
   	//need multi check?
     require(saleStructs[_target][_keyTimeStamp].isConfirmed == false);
     //check enough agentFee
-    require(saleStructs[_target][_keyTimeStamp].agentFee <= balanceOfAt(_target, block.number));
-    //fee?
-    transferFrom(_target, msg.sender, saleStructs[_target][_keyTimeStamp].agentFee);
-	//confirm
+    require(saleStructs[_target][_keyTimeStamp].agentFee <= balanceOf(_target));
+    //fee
+    setDeposit(_target, msg.sender, saleStructs[_target][_keyTimeStamp].agentFee);
+    withdrawDeposit(_target, msg.sender, saleStructs[_target][_keyTimeStamp].agentFee);
+	  //confirm
     saleStructs[_target][_keyTimeStamp].isConfirmed = true;
     ConfirmTradeByCA(_target, _keyTimeStamp);
   }
 
-  event CreateSale(uint256 _deposit, bool _useCA, uint256 _now, address _senderAddress);
-  event ApplySale(address _to, uint256 _keyTimeStamp, uint256 _now, address _senderAddress);
-  event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
+  function withDrawSale(uint256 _keyTimeStamp) public {
+    withdrawDeposit(saleStructs[msg.sender][_keyTimeStamp].buyer, msg.sender, saleStructs[msg.sender][_keyTimeStamp].deposit);
+    WithDrawSale(saleStructs[msg.sender][_keyTimeStamp].buyer, saleStructs[msg.sender][_keyTimeStamp].deposit);
+  }
 
-    ////////////////
-    // Functions for Deposit
-    ////////////////
+  event CreateSale(uint256 _deposit, uint256 _agentFee, bool _useCA, uint256 _now, address _senderAddress);
+  event ApplySale(address _to, uint256 _keyTimeStamp, uint256 _deposit, uint256 _now, address _buyer);
+  event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
+  event WithDrawSale(address _buyer, uint256 _deposit);
+
 }
