@@ -253,6 +253,7 @@ contract BHM is MiniMeToken, User, EOS{
   		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
   		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
   	}
+
   	CreateLease(_deposit, _leaseFee, _useCA, _paymentTimestamp, _keyTimestamp, msg.sender);
   }
 
@@ -322,7 +323,7 @@ contract BHM is MiniMeToken, User, EOS{
   //6. cancel lease before confirm
   event CreateLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 currentTimestamp, address leaseOwner );
   event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
-  event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp); 
+  event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp); */
 
   ////////////////
   // Functions for Sale
