@@ -633,7 +633,7 @@ contract MiniMeToken is Controlled {
 
         // Shortcut for the actual value
         if (_block >= checkpoints[checkpoints.length-1].fromBlock)
-            return checkpoints[checkpoints.length-1].deposit;
+            return checkpoints[checkpoints.length-1].claimerValue[_to];
         if (_block < checkpoints[0].fromBlock) return 0;
 
         // Binary search of the value in the array
@@ -662,8 +662,8 @@ contract MiniMeToken is Controlled {
         var previousBalanceTo = balanceOfAt(_to, block.number);
         var previousBalanceFrom = balanceOfAt(_from, block.number);
 
-        require(previousDepositValueFrom >= _amount);
-        require(previousClaimerValue >= _amount);
+        //require(previousDepositValueFrom >= _amount);
+        //require(previousClaimerValue >= _amount);
 
         //update deposit value
         updateDepositValueAtNow(balances[_from], previousBalanceFrom, previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);

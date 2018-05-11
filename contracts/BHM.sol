@@ -220,8 +220,8 @@ contract BHM is MiniMeToken, User, EOS{
     uint256 deposit;
   	uint256 leaseFee;
   	uint256 agentFee;
+    address leaseOwner;
   	address rent;
-  	address confirmedCA;
   	bool isUsed;
     bool lock;
     bool isConfirmed;
@@ -238,22 +238,23 @@ contract BHM is MiniMeToken, User, EOS{
   //check 128 or 256
   function createLease(uint256 _deposit, uint256 _leaseFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _agentFee) public returns (uint256) {
   	//check condition
-  	var _keyTimestamp = now;
+  	var _keyTimeStamp = now;
   	//unique key is owner x timestamp
   	require(leaseStructs[msg.sender][now].isUsed == false);
-  	leaseStructs[msg.sender][_keyTimestamp].deposit = _deposit;
-  	leaseStructs[msg.sender][_keyTimestamp].leaseFee = _leaseFee;
-  	leaseStructs[msg.sender][_keyTimestamp].isUsed = true;
-  	leaseStructs[msg.sender][_keyTimestamp].lock = false;
-  	leaseStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
+    //leaseStructs[msg.sender][_keyTimeStamp].leaseOwner = msg.sender;
+  	leaseStructs[msg.sender][_keyTimeStamp].deposit = _deposit;
+  	leaseStructs[msg.sender][_keyTimeStamp].leaseFee = _leaseFee;
+  	leaseStructs[msg.sender][_keyTimeStamp].isUsed = true;
+  	leaseStructs[msg.sender][_keyTimeStamp].lock = false;
+  	leaseStructs[msg.sender][_keyTimeStamp].agentFee = _agentFee;
   	//TODO check length add BT case
   	for(uint i = 0; i < _paymentTimestamp.length; ++i) {
-  		leaseStructs[msg.sender][_keyTimestamp].paymentTimestamp.push(_paymentTimestamp[i]);
-  		leaseStructs[msg.sender][_keyTimestamp].isPaid.push(false);
+  		leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.push(_paymentTimestamp[i]);
+  		leaseStructs[msg.sender][_keyTimeStamp].isPaid.push(false);
   	}
-  	CreateLease(leaseStructs[msg.sender][_keyTimestamp].deposit, leaseStructs[msg.sender][_keyTimestamp].leaseFee,
-      leaseStructs[msg.sender][_keyTimestamp].agentFee,
-      leaseStructs[msg.sender][_keyTimestamp].isUsed, _paymentTimestamp, _keyTimestamp, msg.sender);
+  	CreateLease(leaseStructs[msg.sender][_keyTimeStamp].deposit, leaseStructs[msg.sender][_keyTimeStamp].leaseFee,
+      leaseStructs[msg.sender][_keyTimeStamp].agentFee,
+      leaseStructs[msg.sender][_keyTimeStamp].isUsed, _paymentTimestamp, _keyTimeStamp, msg.sender);
   }
 
   //2. apply lease
@@ -263,15 +264,18 @@ contract BHM is MiniMeToken, User, EOS{
   	require(leaseStructs[_to][_keyTimeStamp].lock == false);
   	//set deposit for owner
   	//check uint128
-  	uint amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
+  	uint amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length);
     require(amount <= balanceOf(msg.sender));
-  	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * (leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length + 1));
-  	setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].deposit);
 
+    transfer(_to, leaseStructs[_to][_keyTimeStamp].deposit);
+    setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length);
+    setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
+
+    leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
   	leaseStructs[_to][_keyTimeStamp].lock = true;
-  	leaseStructs[_to][_keyTimeStamp].rent = msg.sender;
   	//event
-  	ApplyLease(_to, _keyTimeStamp, leaseStructs[_to][_keyTimeStamp].rent);
+  	ApplyLease(_to, _keyTimeStamp, leaseStructs[_to][_keyTimeStamp].rent,
+      leaseStructs[_to][_keyTimeStamp].deposit, leaseStructs[_to][_keyTimeStamp].leaseFee * leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length);
   }
 
   //3. confirm contract by CA
@@ -295,31 +299,31 @@ contract BHM is MiniMeToken, User, EOS{
   //4. withdraw when time over
   function withdrawLeaseFee(uint256 _keyTimeStamp) public {
 	//is there a faster way?
-    for(uint i = 0; i < leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length; ++i) {
-    	if( (leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
+    for(uint i = 0; i <= leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length-1; ++i) {
+    	if((leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
     		leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] = true;
-    		//withdraw
     		withdrawDeposit(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
+        WithdrawLeaseFee(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
     	}
   	}
   }
 
   //5. withdraw pre-deposit
   //return of the deposit
-  function withdrawPreDeposit(address _target, uint256 _keyTimeStamp) public {
-  //require ownership
-	//require(msg.sender == leaseStructs[_target][_keyTimeStamp].rent);
-	for(uint i = 0; i < leaseStructs[_target][_keyTimeStamp].paymentTimestamp.length; ++i) {
-    	require((leaseStructs[_target][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_target][_keyTimeStamp].isPaid[i] == true));
-  }
-	withdrawDeposit(_target, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].deposit);
+  function withdrawPreDeposit(address _to, uint256 _keyTimeStamp) public {
+    //require ownership
+	  for(uint i = 0; i < leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length-1; ++i) {
+    	require((leaseStructs[_to][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_to][_keyTimeStamp].isPaid[i] == true));
+    }
+    //여기서 에러가 난다.. _target으로 할때..
+    withdrawDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
   }
 
   //6. cancel lease before confirm
-  event CreateLease(uint256 _deposit, uint256 _leaseFee, uint256 _agentFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _currentTimestamp, address _leaseOwner);
-  event ApplyLease(address _to, uint256 _keyTimeStamp, address rent);
+  event CreateLease(uint256 _deposit, uint256 _leaseFee, uint256 _agentFee, bool _useCA, uint256[] _paymentTimestamp, uint256 _keyTimestamp, address _leaseOwner);
+  event ApplyLease(address _to, uint256 _keyTimeStamp, address _rent, uint256 _deposit, uint256 _leaseFee);
   event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp);
-
+  event WithdrawLeaseFee(address _from , address _to, uint256 _leaseFee);
   ////////////////
   // Functions for Sale
   ////////////////
@@ -327,7 +331,6 @@ contract BHM is MiniMeToken, User, EOS{
     uint256 deposit;
   	uint256 agentFee;
   	address buyer;
-  	address confirmedCA;
   	bool isUsed;
     bool lock;
     bool isConfirmed;
