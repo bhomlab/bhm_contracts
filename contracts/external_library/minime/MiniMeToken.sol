@@ -463,6 +463,7 @@ contract MiniMeToken is Controlled {
                Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
                newCheckPoint.fromBlock =  uint128(block.number);
                newCheckPoint.value = uint128(_value);
+               newCheckPoint.deposit = uint128(_value);
            } else {
                Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
                oldCheckPoint.value = uint128(_value);
@@ -662,13 +663,14 @@ contract MiniMeToken is Controlled {
         var previousBalanceTo = balanceOfAt(_to, block.number);
         var previousBalanceFrom = balanceOfAt(_from, block.number);
 
-        //require(previousDepositValueFrom >= _amount);
-        //require(previousClaimerValue >= _amount);
+        require(previousDepositValueFrom >= _amount);
+        require(previousClaimerValue >= _amount);
 
         //update deposit value
         updateDepositValueAtNow(balances[_from], previousBalanceFrom, previousDepositValueFrom - _amount, previousClaimerValue - _amount, _to);
 	      //update from balance
-	      updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+	      //updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        updateDepositValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositValueFrom, previousClaimerValue, _from);
         // An event to make the deposit easy to find on the blockchain
         WithdrawDeposit(_from, _to, _amount);
 	}

@@ -71,18 +71,6 @@ contract BHM is MiniMeToken, User, EOS{
     return true;
   }
 
-  //즉시지불
-  function initialPayment(address _to, uint256 _amount) public returns (bool){
-    immediatelyTransfer(_to, _amount);
-    Transinit(msg.sender, _to, _amount);
-  }
-
-  function immediatelyTransfer(address _to, uint256 _amount) internal returns (bool success) {
-    return super.transfer(_to, _amount);
-  }
-
-  event Transinit(address _from, address _to, uint256 _amount);
-
   ////////////////
   // Functions for User Level Policy
   ////////////////
@@ -118,6 +106,42 @@ contract BHM is MiniMeToken, User, EOS{
 
   event SetAdmin(address _addr);
   event AddCertifiedAgent(address _addr);
+
+  struct InitialPayStruct {
+    uint256 deposit;
+  	bool isUsed;
+  }
+
+  mapping (address => mapping(uint256 => InitialPayStruct)) initialPayStructs;
+
+  function createInitialPay(uint256 _deposit) public returns (uint256) {
+  	var _keyTimestamp = now;
+    //isUsed 시연할때는 빼고
+    //require(initialPayStructs[msg.sender][_keyTimestamp].isUsed == false);
+  	initialPayStructs[msg.sender][_keyTimestamp].deposit = _deposit;
+  	//initialPayStructs[msg.sender][_keyTimestamp].isUsed = true;
+
+
+  	CreateInitialPay(msg.sender, initialPayStructs[msg.sender][_keyTimestamp].deposit, now);
+  }
+
+  //즉시지불
+  function initialPayment(address _to, uint256 _keyTimestamp) public returns (bool){
+    //isUsed 시연할때는 빼고
+    //require(initialPayStructs[_to][_keyTimestamp].isUsed == true);
+
+    immediatelyTransfer(_to, initialPayStructs[_to][_keyTimestamp].deposit);
+    Transinit(msg.sender, _to, initialPayStructs[_to][_keyTimestamp].deposit);
+
+    //initialPayStructs[_to][_keyTimestamp].isUsed == false;
+  }
+
+  function immediatelyTransfer(address _to, uint256 _amount) internal returns (bool success) {
+    return super.transfer(_to, _amount);
+  }
+
+  event CreateInitialPay(address _from, uint256 _deposit, uint256 _keyTimestamp);
+  event Transinit(address _from, address _to, uint256 _amount);
 
   /* ////////////////
   // Functions for Auction
