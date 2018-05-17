@@ -290,7 +290,6 @@ contract BHM is MiniMeToken, User, EOS{
   	//check uint128
   	uint amount = leaseStructs[_to][_keyTimeStamp].deposit + (leaseStructs[_to][_keyTimeStamp].leaseFee * leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length);
     require(amount <= balanceOf(msg.sender));
-
     transfer(_to, leaseStructs[_to][_keyTimeStamp].deposit);
     setDeposit(msg.sender, _to, leaseStructs[_to][_keyTimeStamp].leaseFee * leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length);
     setDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
@@ -318,15 +317,17 @@ contract BHM is MiniMeToken, User, EOS{
 	  //confirm
     leaseStructs[_target][_keyTimeStamp].isConfirmed = true;
     ConfirmLeaseByCA(_target, _keyTimeStamp);
+
   }
 
   //4. withdraw when time over
-  function withdrawLeaseFee(uint256 _keyTimeStamp) public {
+  function withdrawLeaseFee(address _target, uint256 _keyTimeStamp) public {
 	//is there a faster way?
-    for(uint i = 0; i <= leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length-1; ++i) {
+    for(uint i = 0; i < leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp.length; ++i) {
     	if((leaseStructs[msg.sender][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] == false)){
     		leaseStructs[msg.sender][_keyTimeStamp].isPaid[i] = true;
-    		withdrawDeposit(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
+        //1가 2에게서 가져감
+    		withdrawDeposit(_target, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
         WithdrawLeaseFee(leaseStructs[msg.sender][_keyTimeStamp].rent, msg.sender, leaseStructs[msg.sender][_keyTimeStamp].leaseFee);
     	}
   	}
@@ -336,10 +337,9 @@ contract BHM is MiniMeToken, User, EOS{
   //return of the deposit
   function withdrawPreDeposit(address _to, uint256 _keyTimeStamp) public {
     //require ownership
-	  for(uint i = 0; i < leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length-1; ++i) {
+	  for(uint i = 0; i < leaseStructs[_to][_keyTimeStamp].paymentTimestamp.length; ++i) {
     	require((leaseStructs[_to][_keyTimeStamp].paymentTimestamp[i] <= now) && (leaseStructs[_to][_keyTimeStamp].isPaid[i] == true));
     }
-    //여기서 에러가 난다.. _target으로 할때..
     withdrawDeposit(_to, msg.sender, leaseStructs[_to][_keyTimeStamp].deposit);
   }
 
@@ -348,6 +348,7 @@ contract BHM is MiniMeToken, User, EOS{
   event ApplyLease(address _to, uint256 _keyTimeStamp, address _rent, uint256 _deposit, uint256 _leaseFee);
   event ConfirmLeaseByCA(address _target, uint256 _keyTimeStamp);
   event WithdrawLeaseFee(address _from , address _to, uint256 _leaseFee);
+
   ////////////////
   // Functions for Sale
   ////////////////
