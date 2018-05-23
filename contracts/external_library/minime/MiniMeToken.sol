@@ -458,25 +458,6 @@ contract MiniMeToken is Controlled {
     }
 
     function updateDepositValueAtNow(Checkpoint[] storage checkpoints, uint _value, uint _depositValue, uint _claimerDepositValue, address _to) internal{
-//        if (checkpoints.length == 0){
-//            Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
-//            newCheckPoint.fromBlock =  uint128(block.number);
-//            newCheckPoint.deposit = uint128(_depositValue);
-//            claimerValue[_to] = uint128(_claimerDepositValue);
-//            newCheckPoint.value = uint128(_value);
-//        } else if(checkpoints[checkpoints.length -1].fromBlock < block.number) {
-//            Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-//            newCheckPoint.fromBlock =  uint128(block.number);
-//            newCheckPoint.deposit = uint128(_depositValue);
-//            //newCheckPoint.claimerValue = oldCheckPoint.claimerValue;
-//            claimerValue[_to] = uint128(_claimerDepositValue);
-//            newCheckPoint.value = uint128(_value);
-//        } else {
-//            // Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-//            oldCheckPoint.deposit = uint128(_depositValue);
-//            claimerValue[_to] = uint128(_claimerDepositValue);
-//            oldCheckPoint.value = uint128(_value);
-//        }
         if ((checkpoints.length == 0)
           || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
                Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
@@ -589,16 +570,19 @@ contract MiniMeToken is Controlled {
         }
         var previousDepositValueFrom = depositBalanceOfAt(_from, block.number);
         var previousClaimerValueFrom = claimerBalanceAt(_from, block.number, _to);
+        var previousDepositValueTo = depositBalanceOfAt(_to, block.number);
+        var previousClaimerValueTo = claimerBalanceAt(_to, block.number, _from);
         var previousBalanceTo = balanceOfAt(_to, block.number);
         var previousBalanceFrom = balanceOfAt(_from, block.number);
         
         require(previousDepositValueFrom >= _amount);
         require(previousClaimerValueFrom >= _amount);
-        TestBefore(_from, _to, previousDepositValueFrom, previousClaimerValueFrom, _amount);
+        //TestBefore(_from, _to, previousDepositValueFrom, previousClaimerValueFrom, _amount);
         // update deposit value
         updateDepositValueAtNow(balances[_from], previousBalanceFrom, previousDepositValueFrom - _amount, previousClaimerValueFrom - _amount, _to);
         // update from balance
-        updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        updateDepositValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositValueTo, previousClaimerValueTo, _from);
+        //updateValueAtNow(balances[_to], previousBalanceTo + _amount);
         // An event to make the deposit easy to find on the blockchain
         WithdrawDeposit(_from, _to, _amount);
     }

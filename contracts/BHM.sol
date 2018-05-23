@@ -364,7 +364,7 @@ contract BHM is MiniMeToken, User, EOS{
         saleStructs[msg.sender][_keyTimestamp].lock = false;
         saleStructs[msg.sender][_keyTimestamp].agentFee = _agentFee;
         CreateSale(saleStructs[msg.sender][_keyTimestamp].deposit, saleStructs[msg.sender][_keyTimestamp].agentFee,
-     	saleStructs[msg.sender][_keyTimestamp].isUsed,  now, msg.sender);
+     	saleStructs[msg.sender][_keyTimestamp].isUsed, _keyTimestamp, msg.sender);
     }
 
     function applySale(address _to, uint256 _keyTimeStamp) public{
@@ -400,7 +400,7 @@ contract BHM is MiniMeToken, User, EOS{
         WithDrawSale(saleStructs[msg.sender][_keyTimeStamp].buyer, saleStructs[msg.sender][_keyTimeStamp].deposit);
     }
 
-    event CreateSale(uint256 _deposit, uint256 _agentFee, bool _useCA, uint256 _now, address _senderAddress);
+    event CreateSale(uint256 _deposit, uint256 _agentFee, bool _useCA, uint256 _keyTimeStamp, address _senderAddress);
     event ApplySale(address _to, uint256 _keyTimeStamp, uint256 _deposit, uint256 _now, address _buyer);
     event ConfirmTradeByCA(address _target, uint256 _keyTimeStamp);
     event WithDrawSale(address _buyer, uint256 _deposit);
