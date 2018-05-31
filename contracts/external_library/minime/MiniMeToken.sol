@@ -52,7 +52,12 @@ contract MiniMeToken is Controlled {
         uint128 deposit;
     }
 
+//	struct ClaimerPoint{
+//		
+//	    uint128 claimerValue;
+//	}
     // claimer mapping
+    //mapping (address => ClaimerPoint[]) claimerPoint;
     mapping (address => uint128) claimerValue;
     // `parentToken` is the Token address that was cloned to produce this token;
     // it will be 0x0 for a token that was not cloned
@@ -166,12 +171,14 @@ contract MiniMeToken is Controlled {
 //           }
         // First update the balance array with the new value for the address
         // sending the tokens
-        updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
+        var previousDepositFrom = depositBalanceOfAt(_from, block.number);
+        var previousDepositTo = depositBalanceOfAt(_to, block.number);
+        updateValueAtNow(balances[_from], previousBalanceFrom - _amount, previousDepositFrom);
         // Then update the balance array with the new value for the address
         // receiving the tokens
         var previousBalanceTo = balanceOfAt(_to, block.number);
         require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        updateValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositTo);
         // An event to make the transfer easy to find on the blockchain
         Transfer(_from, _to, _amount);
     }
@@ -327,11 +334,16 @@ contract MiniMeToken is Controlled {
         require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
         uint previousBalanceTo = balanceOf(_owner);
         require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
+        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount, 0);
+        updateValueAtNow(balances[_owner], previousBalanceTo + _amount, depositBalanceOfAt(_owner, block.number));
+//        if(depositBalanceOfAt(_owner, block.number) != 0){
+//            //deposit이 있으면?? 굳이 업데이트 할 필요 있나 없나..
+//            updateValueAtNow(balances[_owner], previousBalanceTo + _amount, depositBalanceOfAt(_owner, block.number));
+//        }
         Transfer(0, _owner, _amount);
         return true;
     }
+    
 
     // / @notice Burns `_amount` tokens from `_owner`
     // / @param _owner The address that will lose the tokens
@@ -341,9 +353,15 @@ contract MiniMeToken is Controlled {
         uint curTotalSupply = totalSupply();
         require(curTotalSupply >= _amount);
         uint previousBalanceFrom = balanceOf(_owner);
+        uint previousDepositFrom = depositBalanceOfAt(_owner, block.number);
         require(previousBalanceFrom >= _amount);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
+        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount, 0);
+        //deposit 뮤무
+        if(previousDepositFrom == 0){
+         updateValueAtNow(balances[_owner], previousBalanceFrom - _amount, 0);   
+        }else {
+         updateValueAtNow(balances[_owner], previousBalanceFrom - _amount, previousDepositFrom);   
+        }
         Transfer(_owner, 0, _amount);
         return true;
     }
@@ -390,12 +408,13 @@ contract MiniMeToken is Controlled {
     // /  `totalSupplyHistory`
     // / @param checkpoints The history of data being updated
     // / @param _value The new number of tokens
-    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value) internal{
+    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value, uint _deposit) internal{
         if ((checkpoints.length == 0)
           || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
             Checkpoint storage newCheckPoint = checkpoints[checkpoints.length++];
             newCheckPoint.fromBlock =  uint128(block.number);
             newCheckPoint.value = uint128(_value);
+            newCheckPoint.deposit = uint128(_deposit);
         } else {
             Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
             oldCheckPoint.value = uint128(_value);
@@ -470,6 +489,19 @@ contract MiniMeToken is Controlled {
                oldCheckPoint.deposit = uint128(_depositValue);
                claimerValue[_to] = uint128(_claimerDepositValue);
                oldCheckPoint.value = uint128(_value);
+         }
+    }
+    
+    function updateDepositNow(Checkpoint[] storage checkpoints, uint _depositValue) internal{
+        if ((checkpoints.length == 0)
+          || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
+               Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
+               newCheckPoint.fromBlock =  uint128(block.number);
+               newCheckPoint.deposit = uint128(_depositValue);
+         } else {
+               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
+               oldCheckPoint.deposit = uint128(_depositValue);
+               
          }
     }
 
@@ -581,8 +613,8 @@ contract MiniMeToken is Controlled {
         // update deposit value
         updateDepositValueAtNow(balances[_from], previousBalanceFrom, previousDepositValueFrom - _amount, previousClaimerValueFrom - _amount, _to);
         // update from balance
-        updateDepositValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositValueTo, previousClaimerValueTo, _from);
-        //updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+        //updateDepositValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositValueTo, previousClaimerValueTo, _from);
+        updateValueAtNow(balances[_to], previousBalanceTo + _amount, previousDepositValueTo);
         // An event to make the deposit easy to find on the blockchain
         WithdrawDeposit(_from, _to, _amount);
     }
